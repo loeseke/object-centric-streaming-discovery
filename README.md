@@ -1,10 +1,10 @@
 # Object-Centric Streaming Discovery
 
-This streaming framework supports the online discovery of Object-Centric Directly-Follows Graphs (OC-DFGs), Object-Centric Petri Nets (OCPNs), and Temporal Object Type Models (TOTeM models) from object-centric event streams. Currently, object-centric event streams are simulated based on OCEL 2.0 logs in JSON format.
+This streaming framework supports the online discovery of <i>Object-Centric Directly-Follows Graphs</i> (OC-DFGs) \[[1](#1)\], <i>Object-Centric Petri Nets</i> (OCPNs) \[[2](#2)\], and <i>Temporal Object Type Models</i> (TOTeM models) \[[3](#3)\] from object-centric event streams. Currently, object-centric event streams are simulated based on OCEL 2.0 logs in JSON format.
 
 ## Setup
 
-The implementation is based on Python 3.12. For evaluation purposes, each model can be discovered offline on a full log and translated to the representation used by the streaming framework. The TOTeM offline discovery requires version 1.3.3 of the `ocpa` library, which requires version 2.2.32 of `pm4py`. The offline discovery of OC-DFGs and OCPNs, on the other hand, does not rely on `ocpa` and uses `pm4py` version 2.7.15.
+The implementation is based on Python 3.12. For evaluation purposes, each model can be discovered offline on a full log and translated to the representation used by the streaming framework. The offline discovery of TOTeM requires version 1.3.3 of the `ocpa` library, which requires version 2.2.32 of `pm4py` \[[4](#4)\]. The offline discovery of OC-DFGs and OCPNs does not rely on `ocpa` and uses `pm4py` version 2.7.15.
 Therefore, two different virtual environments need to be set up to evaluate each online model against its offline model.
 
 ```bash
@@ -22,9 +22,11 @@ pip install -r requirements_ocpa.txt
 
 ## Usage
 
-The `data` directory contains a toy OCEL 2.0 log and scripts for automatically downloading a large OCEL 2.0 log and pre-processing it. Classes and functions for converting a log into an event stream, processing the stream by updating a streaming representation, and mining, visualizing, and evaluating the resulting model are located in the `src` directory.
+The `data` directory contains a toy OCEL 2.0 log and scripts for automatically downloading a large container-logistics log \[[5](#5)\] and pre-processing it. Classes and functions for converting a log into an event stream, processing the stream by updating a streaming representation, and mining, visualizing, and evaluating the resulting model are located in the `src` directory.
 
 ### Downloading OCEL 2.0 log
+
+The XML and JSON container-logistics logs can be downloaded automatically with the following commands. It is also pre-processed to ensure the logs contain uniform timestamp formats, for example.
 
 ```bash
 source path/to/pm4py/venv/Scripts/activate
@@ -35,6 +37,8 @@ python fix_xml_ContainerLogistics.py
 ```
 
 ### Converting log to object-centric event stream
+
+Example for loading OCEL 2.0 log as event stream:
 
 ```python
 from utils import EventStream
@@ -95,3 +99,11 @@ ocdfg_model.visualize(path/to/output/directory, 'ocdfg.pdf', ot_to_hex_color, vi
 ## Authors
 
 The streaming framework for discovering object-centric models was created by [Nina Löseke](https://github.com/loeseke). [Lukas Liss](https://github.com/LukasLiss) contributed the original code of the [Temporal Object Type Model (TOTeM) Miner](https://github.com/LukasLiss/TOTeM-temporal-object-type-model).
+
+## References
+
+\[<a id="1">1</a>\] Alessandro Berti and Wil M. P. van der Aalst. OC-PM: analyzing object-centric event logs and process models. <i>Int. J. Softw. Tools Technol. Transf.</i>, 25(1):1–17, 2023. doi: 10.1007/S10009-022-00668-W. URL https://doi.org/10.1007/s10009-022-00668-w.<br>
+\[<a id="2">2</a>\] Wil M. P. van der Aalst and Alessandro Berti. Discovering Object-centric Petri Nets. <i>Fundam. Informaticae</i>, 175(1-4):1–40, 2020. doi: 10.3233/FI-2020-1946. URL https://doi.org/10.3233/FI-2020-1946.<br>
+\[<a id="3">3</a>\] Lukas Liss, Jan Niklas Adams, and Wil M. P. van der Aalst. TOTeM: Temporal Object Type Model for Object-Centric Process Mining. In Andrea Marrella, Manuel Resinas, Mieke Jans, and Michael Rosemann, editors, <i>Business Process Management Forum</i>, pages 107–123, Cham, 2024. Springer Nature Switzerland. ISBN 978-3-031-70418-5.<br>
+\[<a id="4">4</a>\] Alessandro Berti, Sebastiaan J. van Zelst, and Daniel Schuster. PM4Py: A process mining library for Python. <i>Softw. Impacts</i>, 17:100556, 2023. doi: 10.1016/J.SIMPA.2023.100556. URL https://doi.org/10.1016/j.simpa.2023.100556.<br>
+\[<a id="5">5</a>\] Nina Graves and Benedikt Knopp. Container Logistics Object-centric Event Log, 2023. URL https://doi.org/10.5281/zenodo.8428084.
