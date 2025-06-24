@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<log>
+    <object-types>
+        <object-type name="Customer">
+            <attributes/>
+        </object-type>
+        <object-type name="Item">
+            <attributes/>
+        </object-type>
+        <object-type name="Order">
+            <attributes/>
+        </object-type>
+        <object-type name="Parcel">
+            <attributes/>
+        </object-type>
+        <object-type name="Shipping label">
+            <attributes/>
+        </object-type>
+    </object-types>
+    <event-types>
+        <event-type name="Place order">
+            <attributes/>
+        </event-type>
+        <event-type name="Pick item">
+            <attributes/>
+        </event-type>
+        <event-type name="Package">
+            <attributes/>
+        </event-type>
+        <event-type name="Label">
+            <attributes/>
+        </event-type>
+    </event-types>
+    <objects>
+        <object id="c_1" type="Customer">
+            <attributes/>
+            <objects/>
+        </object>
+        <object id="o_1" type="Order">
+            <attributes/>
+            <objects/>
+        </object>
+        <object id="i_1" type="Item">
+            <attributes/>
+            <objects/>
+        </object>
+        <object id="i_2" type="Item">
+            <attributes/>
+            <objects/>
+        </object>
+        <object id="p_1" type="Parcel">
+            <attributes/>
+            <objects>
+                <relationship object-id="l_1" qualifier="label created for"/>
+            </objects>
+        </object>
+        <object id="l_1" type="Shipping label">
+            <attributes/>
+            <objects/>
+        </object>
+    </objects>
+    <events>
+        <event id="e1" type="Place order" time="2025-01-01T00:00:00Z">
+            <attributes/>
+                <objects>
+                    <relationship object-id="c_1" qualifier=""/>
+                    <relationship object-id="o_1" qualifier=""/>
+                    <relationship object-id="i_1" qualifier=""/>
+                    <relationship object-id="i_2" qualifier=""/>
+                </objects>
+        </event>
+        <event id="e2" type="Pick item" time="2025-01-02T00:00:00Z">
+            <attributes/>
+                <objects>
+                    <relationship object-id="o_1" qualifier=""/>
+                    <relationship object-id="i_2" qualifier=""/>
+                </objects>
+        </event>
+        <event id="e3" type="Pick item" time="2025-01-03T00:00:00Z">
+            <attributes/>
+                <objects>
+                    <relationship object-id="o_1" qualifier=""/>
+                    <relationship object-id="i_1" qualifier=""/>
+                </objects>
+        </event>
+        <event id="e4" type="Package" time="2025-01-04T00:00:00Z">
+            <attributes/>
+                <objects>
+                    <relationship object-id="o_1" qualifier=""/>
+                    <relationship object-id="p_1" qualifier=""/>
+                </objects>
+        </event>
+        <event id="e5" type="Label" time="2025-01-05T00:00:00Z">
+            <attributes/>
+                <objects>
+                    <relationship object-id="l_1" qualifier=""/>
+                </objects>
+        </event>
+    </events>
+</log>

@@ -1,0 +1,151 @@
+{
+    "objectTypes": [
+        {
+            "name": "Customer"
+        },
+        {
+            "name": "Item"
+        },
+        {
+            "name": "Order"
+        },
+        {
+            "name": "Parcel"
+        },
+        {
+            "name": "Shipping label"
+        }
+    ],
+    "objects": [
+        {
+            "id": "c_1",
+            "type": "Customer"
+        },
+        {
+            "id": "o_1",
+            "type": "Order"
+        },
+        {
+            "id": "i_1",
+            "type": "Item"
+        },
+        {
+            "id": "i_2",
+            "type": "Item"
+        },
+        {
+            "id": "p_1",
+            "type": "Parcel",
+            "relationships": [
+                {
+                    "objectId": "l_1",
+                    "qualifier": "label created for",
+                    "time": "2025-01-06T00:00:00Z"
+                }
+            ]
+        },
+        {
+            "id": "l_1",
+            "type": "Shipping label"
+        }
+    ],
+    "eventTypes": [
+        {
+            "name": "Place order",
+            "attributes": []
+        },
+        {
+            "name": "Pick item",
+            "attributes": []
+        },
+        {
+            "name": "Package",
+            "attributes": []
+        },
+        {
+            "name": "Label",
+            "attributes": []
+        }
+    ],
+    "events": [
+        {
+            "id": "e1",
+            "type": "Place order",
+            "time": "2025-01-01T00:00:00Z",
+            "relationships": [
+                {
+                    "objectId": "c_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "o_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "i_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "i_2",
+                    "qualifier": ""
+                }
+            ]
+        },
+        {
+            "id": "e2",
+            "type": "Pick item",
+            "time": "2025-01-02T00:00:00Z",
+            "relationships": [
+                {
+                    "objectId": "o_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "i_2",
+                    "qualifier": ""
+                }
+            ]
+        },
+        {
+            "id": "e3",
+            "type": "Pick item",
+            "time": "2025-01-03T00:00:00Z",
+            "relationships": [
+                {
+                    "objectId": "o_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "i_1",
+                    "qualifier": ""
+                }
+            ]
+        },
+        {
+            "id": "e4",
+            "type": "Package",
+            "time": "2025-01-04T00:00:00Z",
+            "relationships": [
+                {
+                    "objectId": "o_1",
+                    "qualifier": ""
+                },
+                {
+                    "objectId": "p_1",
+                    "qualifier": ""
+                }
+            ]
+        },
+        {
+            "id": "e5",
+            "type": "Label",
+            "time": "2025-01-05T00:00:00Z",
+            "relationships": [
+                {
+                    "objectId": "l_1",
+                    "qualifier": ""
+                }
+            ]
+        }
+    ]
+}
