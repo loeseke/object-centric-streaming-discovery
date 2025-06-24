@@ -94,4 +94,4 @@ ocdfg_model.visualize(path/to/output/directory, 'ocdfg.pdf', ot_to_hex_color, vi
 
 ## Authors
 
-The streaming framework for discovering object-centric models was created by [Nina Löseke](https://github.com/loeseke). [Lukas Liss](https://github.com/LukasLiss) contributed the original code of the [Temporal Object Type Model (TOTeM) Miner](https://github.com/LukasLiss/TOTeM-temporal-object-type-model).
+The streaming framework for discovering object-centric models was created by [Nina Löseke](https://github.com/loeseke). [Lukas Liss](https://github.com/LukasLiss) contributed the original code of the offline [Temporal Object Type Model (TOTeM) Miner](https://github.com/LukasLiss/TOTeM-temporal-object-type-model).
