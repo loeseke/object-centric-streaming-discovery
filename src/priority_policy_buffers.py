@@ -872,7 +872,32 @@ class PPBEventsPerObjectType(PrioPolicyBuffer):
 
 
 class PPBCustom(PrioPolicyBuffer):
+    """
+    Represents a priority-policy buffer based on a custom ranking of object types, if they are known beforehand.
+
+    Attributes
+    ----------
+    prio_order : PrioPolicyOrder
+        Direction of priority policy.
+    pp : PriorityPolicy
+        Enum of corresponding priority policy.
+    ot_to_rank : dict[str, float]
+        Mapping of object types to static, min-max-normalized ranks.
+    buf_name : str
+        Name and direction of priority policy.
+    """
+
     def __init__(self, prio_order : PrioPolicyOrder, ot_list : list[str]):
+        """
+        Initializes a PPBCustom object.
+
+        Parameters
+        ----------
+        prio_order : PrioPolicyOrder
+            Direction of priority policy.
+        ot_list : list[str]
+            List of all object types, sorted in order of increasing or decreasing rank, depending on the direction of the priority policy.
+        """
         self.prio_order = prio_order
         
         # Translate order of OTs to linear ranking of OTs once
@@ -893,9 +918,25 @@ class PPBCustom(PrioPolicyBuffer):
         pass
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
+        """
+        Depending on direction of priority policy, the min-max-normalized "rank" for each buffered object type refers to its position in the ranking used to initialize the PPB object.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping of object types to min-max-normalized ranks in [0, 1].
+        """
         return self.ot_to_rank
     
     def to_string(self) -> str:
+        """
+        Creates string describing priority-policy buffer including its parameters (e.g. direction) and order of object types.
+
+        Returns
+        -------
+        str
+            Output string describing parameters and content of buffer.
+        """
         ret_str = f'Priority-policy buffer characteristics:\n - priority policy: {self.pp.value}\n - most likely to get removed for min rank\n - buffer size: {len(self)}\n'
 
         # Unroll buffer structure: OT -> #events
@@ -914,7 +955,34 @@ class PPBCustom(PrioPolicyBuffer):
 
 
 class PPBObjectsPerObjectType(PrioPolicyBuffer):
+    """
+    Represents a priority-policy buffer that counts the number of objects per object type.
+
+    Attributes
+    ----------
+    prio_order : PrioPolicyOrder
+        Direction of priority policy.
+    window_size : int
+        Maximum number of unique objects that are buffered per object type.
+    pp : PriorityPolicy
+        Enum of corresponding priority policy.
+    buf_name : str
+        Name and direction of priority policy.
+    buf : dict[str, set[str]]
+        Dictionary containing priority-policy buffer items, i.e. mapping object types to number to set of unique, observed objects.
+    """
+    
     def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 1000):
+        """
+        Initializes a PPBObjectsPerObjectType object.
+
+        Parameters
+        ----------
+        prio_order : PrioPolicyOrder
+            Direction of priority policy.
+        window_size : int, default=1000
+            Maximum number of unique objects that are buffered per object type before all buffered objects are reset for all object types to ensure limited memory use.
+        """
         self.prio_order = prio_order
         self.window_size = window_size
         
@@ -927,6 +995,23 @@ class PPBObjectsPerObjectType(PrioPolicyBuffer):
         return len(self.buf)
 
     def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
+        """
+        Updates set of unique objects for currently buffered object types or adds new types.
+
+        Parameters
+        ----------
+        stream_item : Union[Event, O2OUpdate]
+            In-coming event or object-to-object update whose involved objects update the buffer.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotImplementedError
+            If unsupported stream item is given.
+        """
         if isinstance(stream_item, Event):
             new_tups = [(d['objectType'], d['objectId']) for d in stream_item.e2o_relations]
         elif isinstance(stream_item, O2OUpdate):
@@ -946,6 +1031,14 @@ class PPBObjectsPerObjectType(PrioPolicyBuffer):
                     self.buf[new_ot_key] = set([new_oid])
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
+        """
+        Depending on direction of priority policy, min-max-normalized "rank" for each buffered object type is determined based on its number of unique objects. The type with the smallest rank is most likely to be removed.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping of object types to min-max-normalized ranks in [0, 1].
+        """
         # No "+1" correction of #unique OIDs necessary to avoid division by zero in case of PrioPolicyOrder.MAX since #unique OIDs per OT is at least 1
         if self.prio_order == PrioPolicyOrder.MIN:
             key_to_val = {ot: len(unique_oids) for ot, unique_oids in self.buf.items()}
@@ -955,6 +1048,14 @@ class PPBObjectsPerObjectType(PrioPolicyBuffer):
         return min_max_normalize_dict(key_to_val)
     
     def to_string(self) -> str:
+        """
+        Creates string describing priority-policy buffer including its parameters (e.g. direction) and buffered object types in tabular format.
+
+        Returns
+        -------
+        str
+            Output string describing parameters and content of buffer.
+        """
         ret_str = f'Priority-policy buffer characteristics:\n - priority policy: {self.pp.value}\n - most likely to get removed for {self.prio_order.value} value\n - window size: {self.window_size}\n - buffer size: {len(self)}\n'
 
         # Unroll buffer structure: OT -> set of objects of limited length
