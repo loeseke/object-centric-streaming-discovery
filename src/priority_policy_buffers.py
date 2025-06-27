@@ -756,19 +756,63 @@ class PPBObjectsPerEvent(PrioPolicyBuffer):
     
 
 class PPBEventsPerObjectType(PrioPolicyBuffer):
+    """
+    Represents a priority-policy buffer that counts the number of events per object type.
+
+    Attributes
+    ----------
+    prio_order : PrioPolicyOrder
+        Direction of priority policy.
+    max_counter : int
+        Maximum counter for number of events for any object type before all counters are reset to avoid overflow.
+    pp : PriorityPolicy
+        Enum of corresponding priority policy.
+    buf_name : str
+        Name and direction of priority policy.
+    buf : dict[str, int]
+        Dictionary containing priority-policy buffer items, i.e. mapping object types to number of events.
+    """
+
     def __init__(self, prio_order : PrioPolicyOrder, max_counter : int = 100000):
+        """
+        Initializes a PPBEventsPerObjectType object.
+
+        Parameters
+        ----------
+        prio_order : PrioPolicyOrder
+            Direction of priority policy.
+        max_counter : int, default=100000
+            Maximum counter for number of events for any object type before all counters are reset.
+        """
         self.prio_order = prio_order
         self.max_counter = max_counter
         
         self.pp = PriorityPolicy.EVENTS_PER_OT
         self.buf_name = f'{prio_order.value} {self.pp.value}'
         # OT -> #events
-        self.buf : dict[str, list[int]] = dict()
+        self.buf : dict[str, int] = dict()
 
     def __len__(self) -> int:
         return len(self.buf)
 
     def update(self, stream_item : Event) -> None:
+        """
+        Updates number of events for currently buffered object types or adds new types.
+
+        Parameters
+        ----------
+        stream_item : Event
+            In-coming event whose involved object types update the buffer.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotImplementedError
+            If unsupported stream item is given.
+        """
         unique_ots = set([d['objectType'] for d in stream_item.e2o_relations])
 
         # Increase #events per OT
@@ -785,6 +829,14 @@ class PPBEventsPerObjectType(PrioPolicyBuffer):
                 self.buf[new_ot] = new_count
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
+        """
+        Depending on direction of priority policy, min-max-normalized "rank" for each buffered object type is determined based on its total number of events. The type with the smallest rank is most likely to be removed.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping of object types to min-max-normalized ranks in [0, 1].
+        """
         # No "+1" correction of values necessary to avoid division by 0 in case of PrioPolicyOrder.MAX since #events per OT is at least 1
         if self.prio_order == PrioPolicyOrder.MIN:
             key_to_val = self.buf.copy()
@@ -794,6 +846,14 @@ class PPBEventsPerObjectType(PrioPolicyBuffer):
         return min_max_normalize_dict(key_to_val)
     
     def to_string(self) -> str:
+        """
+        Creates string describing priority-policy buffer including its parameters (e.g. direction) and buffered object types in tabular format.
+
+        Returns
+        -------
+        str
+            Output string describing parameters and content of buffer.
+        """
         ret_str = f'Priority-policy buffer characteristics:\n - priority policy: {self.pp.value}\n - most likely to get removed for {self.prio_order.value} value\n - max counter: {self.max_counter}\n - buffer size: {len(self)}\n'
 
         # Unroll buffer structure: OT -> #events
