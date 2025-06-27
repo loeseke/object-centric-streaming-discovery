@@ -223,6 +223,7 @@ class PPBStridePerObjectType(PrioPolicyBuffer):
     buf : dict[str, dict[str, dict[str, Any]]]
         Dictionary containing priority-policy buffer items, i.e. mapping object types to objects and their last-seen timestamps and latest strides.
     """
+
     def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 10, max_obj_per_ot : int = 5, freeze_or_max_idle : Union[bool, pd.Timedelta] = None):
         """
         Initializes a PPBStridePerObjectType object.
@@ -633,7 +634,34 @@ class PPBLifespanPerObjectType(PrioPolicyBuffer):
 
 
 class PPBObjectsPerEvent(PrioPolicyBuffer):
+    """
+    Represents a priority-policy buffer that counts the average number of objects per event.
+
+    Attributes
+    ----------
+    window_size : int
+        Maximum number of events that are tracked per object type.
+    prio_order : PrioPolicyOrder
+        Direction of priority policy.
+    pp : PriorityPolicy
+        Enum of corresponding priority policy.
+    buf_name : str
+        Name and direction of priority policy.
+    buf : dict[str, list[int]]
+        Dictionary containing priority-policy buffer items, i.e. mapping object types to number of respective objects over latest events.
+    """
+
     def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 10):
+        """
+        Initializes a PPBObjectsPerEvent object.
+
+        Parameters
+        ----------
+         prio_order : PrioPolicyOrder
+            Direction of priority policy.
+        window_size : int, default=10
+            Maximum number of events per object type for which number of objects are tracked in sliding-window fashion.
+        """
         self.window_size = window_size
         self.prio_order = prio_order
         
@@ -646,6 +674,23 @@ class PPBObjectsPerEvent(PrioPolicyBuffer):
         return len(self.buf)
 
     def update(self, stream_item : Event) -> None:
+        """
+        Updates number of objects per event for currently buffered object types or adds new types.
+
+        Parameters
+        ----------
+        stream_item : Event
+            In-coming event whose involved object types update the buffer.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotImplementedError
+            If unsupported stream item is given.
+        """
         # Update #objects per event for currently buffered OTs or add new OTs to buffer
         count_per_ot = dict()
         if isinstance(stream_item, Event):
@@ -664,9 +709,17 @@ class PPBObjectsPerEvent(PrioPolicyBuffer):
                 self.buf[new_ot].append(new_count)
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
+        """
+        Depending on direction of priority policy, min-max-normalized "rank" for each buffered object type is determined based on its average number of objects per event. The type with the smallest rank is most likely to be removed.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping of object types to min-max-normalized ranks in [0, 1].
+        """
         key_to_val = dict()
         for ot in self.buf:
-            # No "+1" to avoid division by 0 for PrioPolicyOrder.MAX necessary since #bojects per event per OT is at least 1
+            # No "+1" to avoid division by 0 for PrioPolicyOrder.MAX necessary since #objects per event per OT is at least 1
             if self.prio_order == PrioPolicyOrder.MIN:
                 key_to_val[ot] = np.mean(self.buf[ot])
             else:
@@ -675,6 +728,14 @@ class PPBObjectsPerEvent(PrioPolicyBuffer):
         return min_max_normalize_dict(key_to_val)
     
     def to_string(self) -> str:
+        """
+        Creates string describing priority-policy buffer including its parameters (e.g. direction) and buffered object types in tabular format.
+
+        Returns
+        -------
+        str
+            Output string describing parameters and content of buffer.
+        """
         ret_str = f'Priority-policy buffer characteristics:\n - priority policy: {self.pp.value}\n - most likely to get removed for {self.prio_order.value} value\n - window size: {self.window_size}\n - buffer size: {len(self)}\n'
 
         # Unroll buffer structure: OT -> [#objects per event, ...]
