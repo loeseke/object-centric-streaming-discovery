@@ -12,6 +12,19 @@ import time
 
 
 def min_max_normalize_dict(key_to_val : dict[Any, Union[float, int]]) -> dict[Any, float]:
+    """
+    Apply min-max normalization to values of given dictionary.
+
+    Parameters
+    ----------
+    key_to_val : dict[Any, Union[float, int]]
+        Dictionary whose values are min-max-normalized.
+    
+    Returns
+    -------
+    dict[Any, float]
+        Dictionary with min-max-normalized values.
+    """
     if len(key_to_val) > 0:
         vals = key_to_val.values()
         min_val = min(vals)
@@ -25,7 +38,20 @@ def min_max_normalize_dict(key_to_val : dict[Any, Union[float, int]]) -> dict[An
     return key_to_val
 
 
-def get_mean_timedelta(td_list : list) -> pd.Timedelta:
+def get_mean_timedelta(td_list : list[pd.Timedelta]) -> pd.Timedelta:
+    """
+    Computes the average time span for a list of pandas Timedeltas.
+
+    Parameters
+    ----------
+    td_list : list[pd.Timedelta]
+        List of time spans which is averaged component-wise to avoid overflow that may occur with built-in methods.
+
+    Returns
+    -------
+    pd.Timedelta
+        Average time span.
+    """
     # Split computation of mean of list of Timedelta by mean calculation per unit to avoid overflow error when converting too many days via td.total_seconds()
     tds_round_to_s = [td.as_unit('s') for td in td_list]
     mean_days = round(np.mean([td.components.days for td in tds_round_to_s]))
@@ -36,6 +62,19 @@ def get_mean_timedelta(td_list : list) -> pd.Timedelta:
 
 
 def td_to_str(td : pd.Timedelta) -> str:
+    """
+    Returns a compact string corresponding to the components of the given pd.Timedelta.
+
+    Parameters
+    ----------
+    td : pd.Timedelta
+        Time span to represent as string.
+    
+    Returns
+    -------
+    str
+        pd.Timedelta in format [days-]hours:minutes.
+    """
     # Output duration as format dd-hh:mm
     td_str = f'{td.components.hours:02d}:{td.components.minutes:02d}'
     if td.components.days > 0:
@@ -45,7 +84,40 @@ def td_to_str(td : pd.Timedelta) -> str:
 
 
 class ObjectAttributeUpdate(object):
+    """
+    Represents an object-attribute update, which is a potential stream item in an object-centric event stream.
+
+    Attributes
+    ----------
+    time : pd.Timestamp
+        Time at which object-attribute update occurs.
+    id : str
+        Unique ID of object whose attribute is updated.
+    type : str
+        Type of object whose attribute is updated.
+    attr : str
+        Name of object attribute that is updated.
+    value : Any
+        New value that the object attribute receives.
+    """
+
     def __init__(self, time : pd.Timestamp, id : str, type : str, attr : str, value : Any):
+        """
+        Initializes an ObjectAttributeUpdate object.
+
+        Parameters
+        ----------
+        time : pd.Timestamp
+            Time at which object-attribute update occurs.
+        id : str
+            Unique ID of object whose attribute is updated.
+        type : str
+            Type of object whose attribute is updated.
+        attr : str
+            Name of object attribute that is updated.
+        value : Any
+            New value that the object attribute receives.
+        """
         self.time = time
         self.id = id
         self.type = type
@@ -54,7 +126,44 @@ class ObjectAttributeUpdate(object):
 
 
 class O2OUpdate(object):
+    """
+    Represents an object-to-object update, which is a potential stream item in an object-centric event stream. The qualifier of the relation between a source and target object is updated.
+
+    Attributes
+    ----------
+    time : pd.Timestamp
+        Time at which object-to-object update occurs.
+    id : str
+        Unique ID of source object.
+    type : str
+        Type of source object.
+    target_id : str
+        Unique ID of target object.
+    target_type : str
+        Type of target object.
+    qualifier : str
+        Descriptor of O2O relation between source and target object.
+    """
+    
     def __init__(self, time : pd.Timestamp, id : str, type : str, target_id : str, target_type : str, qualifier : str):
+        """
+        Initializes an O2OUpdate object.
+
+        Parameters
+        ----------
+        time : pd.Timestamp
+            Time at which object-to-object update occurs.
+        id : str
+            Unique ID of source object.
+        type : str
+            Type of source object.
+        target_id : str
+            Unique ID of target object.
+        target_type : str
+            Type of target object.
+        qualifier : str
+            Descriptor of O2O relation between source and target object.
+        """
         self.time = time
         self.id = id
         self.type = type
@@ -62,7 +171,7 @@ class O2OUpdate(object):
         self.target_type = target_type
         self.qualifier = qualifier
     
-    def __str__(self):
+    def __str__(self) -> str:
         return str({
             'time': self.time,
             'id': self.id,
@@ -74,7 +183,40 @@ class O2OUpdate(object):
 
 
 class Event(object):
-    def __init__(self, time : pd.Timestamp, id : str, activity : str, attributes : list[dict], e2o_relations : list[dict]):
+    """
+    Represents an Event object, which is a potential stream item in an object-centric event stream.
+
+    Attributes
+    ----------
+    time : pd.Timestamp
+        Time at which event occurs.
+    id : str
+        Unique ID of event, currently only used since object-centric event streams are simulated from OCEL 2.0 logs where IDs are already assigned to events.
+    activity : str
+        Name of activity that is performed.
+    attributes : list[dict]
+        List of event attributes.
+    e2o_relations : list[dict]
+        List of involved objects.
+    """
+    
+    def __init__(self, time : pd.Timestamp, id : str, activity : str, attributes : list[dict[str, Any]], e2o_relations : list[dict[str, Any]]):
+        """
+        Initializes an Event object.
+
+        Parameters
+        ----------
+        time : pd.Timestamp
+            Time at which event occurs.
+        id : str
+            Unique ID of event, currently only used since object-centric event streams are simulated from OCEL 2.0 logs where IDs are already assigned to events.
+        activity : str
+            Name of activity that is performed.
+        attributes : list[dict[str, Any]]
+            List of event attributes.
+        e2o_relations : list[dict[str, Any]]
+            List of involved objects.
+        """
         self.time = time
         self.id = id
         self.activity = activity
@@ -82,7 +224,19 @@ class Event(object):
         self.e2o_relations = e2o_relations
 
 
-def parse_type_per_oid_json(objects_dict : dict) -> dict:
+def parse_type_per_oid_json(objects_dict : list[dict[str, str]]) -> dict[str, str]:
+    """
+    Creates mapping of objects to types for given list of objects.
+
+    Parameters
+    ----------
+    objects_dict : list[dict[str, str]]
+
+    Returns
+    -------
+    dict[str, str]
+        Mapping of objects to corresponding object types.
+    """
     type_per_obj_id = dict()
     
     for obj in objects_dict:
@@ -91,7 +245,20 @@ def parse_type_per_oid_json(objects_dict : dict) -> dict:
     return type_per_obj_id
 
 
-def parse_ocel2_json_object_updates(objects_dict : dict) -> Tuple[dict, dict]:
+def parse_ocel2_json_object_updates(objects_dict : list[dict[str, str]]) -> list[ObjectAttributeUpdate]:
+    """
+    Creates time-ordered list of ObjectAttributeUpdates from specification of objects according to OCEL 2.0 JSON exchange format.
+
+    Parameters
+    ----------
+    objects_dict : list[dict[str, str]]
+        List of objects from OCEL 2.0 JSON file.
+    
+    Returns
+    -------
+    list[ObjectAttributeUpdate]
+        List of derived ObjectAttributeUpdates ordered by time from least to most recent.
+    """
     # Assume OCEL 2.0 JSON as input format
     object_updates = list()
 
@@ -114,7 +281,24 @@ def parse_ocel2_json_object_updates(objects_dict : dict) -> Tuple[dict, dict]:
     return object_updates
     
 
-def parse_ocel2_json_o2o_updates(objects_dict : dict, min_ts_per_obj_id : dict, o2o_has_time : bool = False) -> Tuple[dict, dict]:
+def parse_ocel2_json_o2o_updates(objects_dict : list[dict[str, str]], min_ts_per_obj_id : dict[str, pd.Timestamp], o2o_has_time : bool = False) -> list[O2OUpdate]:
+    """
+    Creates time-ordered list of O2OUpdates from specification of objects according to OCEL 2.0 JSON exchange format.
+    
+    Parameters
+    ----------
+    objects_dict : list[dict[str, str]]
+        List of objects from OCEL 2.0 JSON file.
+    min_ts_per_obj_id : dict[str, pd.Timestamp]
+        Mapping of objects to timestamps of their first occurrences in the log.
+    o2o_has_time : bool, default=False
+        If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+
+    Returns
+    -------
+    list[O2OUpdate]
+        List of derived O2OUpdates ordered by time from least to most recent.
+    """
     # Assume OCEL 2.0 JSON as input format
     o2o_updates = list()
     type_per_obj_id = parse_type_per_oid_json(objects_dict)
@@ -153,7 +337,22 @@ def parse_ocel2_json_o2o_updates(objects_dict : dict, min_ts_per_obj_id : dict, 
     return o2o_updates
 
 
-def parse_ocel2_json_events(events_dict : dict, objects_dict : dict) -> Tuple[list, dict]:
+def parse_ocel2_json_events(events_dict : list[dict[str, Any]], objects_dict : list[dict[str, Any]]) -> Tuple[list[Event], list[O2OUpdate], dict[str, pd.Timestamp]]:
+    """
+    Creates time-ordered list of Events from specification of objects according to OCEL 2.0 JSON exchange format. Additionally, the timestamp of the first occurrence of an object in an event is extracted. "Enriched" object-to-object updates derived from the event-to-object relations are also defined.
+
+    Parameters
+    ----------
+    events_dict : list[dict[str, Any]]
+        List of events from OCEL 2.0 JSON file.
+    objects_dict : list[dict[str, Any]]
+        List of objects from OCEL 2.0 JSON file.
+
+    Returns
+    -------
+    Tuple[list[Event], list[O2OUpdate], dict[str, pd.Timestamp]]
+        Time-ordered list of events, object-to-object updates derived from events, and mapping of objects to timestamps of first occurrences in events.
+    """
     events = list()
     enriched_o2o_updates = list()
 
@@ -215,7 +414,22 @@ def parse_ocel2_json_events(events_dict : dict, objects_dict : dict) -> Tuple[li
     return events, enriched_o2o_updates, min_ts_per_obj_id
 
 
-def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list, list, list, list, list]:
+def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list[Event], list[ObjectAttributeUpdate], list[O2OUpdate], list[O2OUpdate], list[str]]:
+    """
+    Extracts time-ordered lists of events, (enriched) object-to-object-updates, and object-attribute updates from given OCEL 2.0 in JSON exchange format. Additionally, the object types are extracted.
+
+    Parameters
+    ----------
+    file_path : str
+        Path to OCEL 2.0 JSON file.
+    o2o_has_time : bool, default=False
+        If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+
+    Returns
+    -------
+    Tuple[list[Event], list[ObjectAttributeUpdate], list[O2OUpdate], list[O2OUpdate], list[str]]
+        Time-ordered lists of events, object-attribute updates, object-to-object updates, "enriched" object-to-object updates, and list of object types.
+    """
     with open(file_path, 'r') as ocel_file:
         # NOTE: OCEL JSON dict has keys 'objectTypes', 'eventTypes', 'objects', 'events'
         ocel_dict = json.load(ocel_file)
@@ -228,7 +442,38 @@ def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list
 
 
 class EventStream(object):
+    """
+    Represents an object-centric event stream based on the OCEL 2.0 metamodel for a given OCEL 2.0 log.
+
+    Attributes
+    ----------
+    events : list[Event]
+        Time-ordered list of events.
+    object_updates : list[ObjectAttributeUpdate]
+        Time-ordered list of object-attribute updates.
+    o2o_updates : list[O2OUpdate]
+        Time-ordered list of object-to-object updates.
+    enriched_o2o_updates : list[O2OUpdate]
+        Time-ordered list of object-to-object updates derived from event-to-object relations.
+    object_types : list[str]
+        Unique object types occurring in log.
+    stream : list[Union[Event, O2OUpdate, ObjectAttributeUpdate]]
+        Simulates object-centric event stream as time-ordered lists of events, object-attribute updates, or object-to-object updates as stream items.
+    """
+    
     def __init__(self, file_path : str, enrich_o2o : bool = False, o2o_has_time : bool = False):
+        """
+        Creates an object-centric event stream for a given OCEL 2.0 log in JSON exchange format.
+
+        Parameters
+        ----------
+        file_path : str
+            Path of OCEL 2.0 JSON file.
+        enrich_o2o : bool, default=False
+            If True, object-to-object updates derived from event-to-object relations is added into stream. Alternatively, these "enriched" O2OUpdates can be added to the stream during stream processing for incoming events.
+        o2o_has_time : bool, default=False
+            If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+        """
         print(f'Parsing {file_path}...')
         start_time = time.time()
 
@@ -246,6 +491,14 @@ class EventStream(object):
         print(f'Finished parsing {file_path} in {(time.time()-start_time)/60:.2f} min.')
     
     def create_stream_chunks(self) -> dict[int, list[Union[Event, O2OUpdate, ObjectAttributeUpdate]]]:
+        """
+        Splits object-centric event stream into 10% chunks s.t. each chunk contains 10% of stream items.
+
+        Returns
+        -------
+        dict[int, list[Union[Event, O2OUpdate, ObjectAttributeUpdate]]]
+            Mapping of percentages to chunks of stream items.
+        """
         pct_range = range(0, 100, 10)
         pct_to_chunk = {pct: list() for pct in pct_range[1:]}
         stream_size = len(self.stream)
