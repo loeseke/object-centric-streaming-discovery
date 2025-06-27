@@ -245,7 +245,7 @@ class EventStream(object):
         
         print(f'Finished parsing {file_path} in {(time.time()-start_time)/60:.2f} min.')
     
-    def create_stream_chunks(self) -> dict[int, list[Event | O2OUpdate | ObjectAttributeUpdate]]:
+    def create_stream_chunks(self) -> dict[int, list[Union[Event, O2OUpdate, ObjectAttributeUpdate]]]:
         pct_range = range(0, 100, 10)
         pct_to_chunk = {pct: list() for pct in pct_range[1:]}
         stream_size = len(self.stream)

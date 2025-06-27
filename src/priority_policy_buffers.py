@@ -4,7 +4,7 @@ __author__: "Nina Löseke"
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Union
 from enum import Enum
 import pandas as pd
 import numpy as np
@@ -14,6 +14,10 @@ from utils import get_mean_timedelta, min_max_normalize_dict, Event, O2OUpdate
 
 
 class PriorityPolicy(Enum):
+    """
+    Represents object-centric priority policies optionally used by model buffers.
+    """
+
     STRIDE_OBJ = "stride per object"
     STRIDE_OT = "stride per OT"
     LIFESPAN_OBJ = "lifespan per object"
@@ -25,11 +29,19 @@ class PriorityPolicy(Enum):
 
 
 class PrioPolicyOrder(Enum):
+    """
+    Represents direction of priority policy.
+    """
+
     MIN = 'min'
     MAX = 'max'
 
 
 class PrioPolicyBuffer(ABC):
+    """
+    Abstract base class defining required functionality of a priority-policy buffer.
+    """
+
     prio_order : PrioPolicyOrder
     buf : dict
     pp : PriorityPolicy
@@ -62,7 +74,34 @@ class PrioPolicyBuffer(ABC):
 
 
 class PPBStridePerObject(PrioPolicyBuffer):
+    """
+    Represents a priority-policy buffer that tracks stride per object.
+
+    Attributes
+    ----------
+    window_size : int
+        Maximum number of strides that are tracked per object in sliding-window fashion.
+    prio_order : PrioPolicyOrder
+        Direction of priority policy, e.g. for MIN, object with smallest average stride is most likely to be removed if the model buffer is full.
+    pp : PriorityPolicy
+        Enum of corresponding priority policy.
+    buf_name : str
+        Name and direction of priority policy.
+    buf : dict[str, dict[str, Any]]
+        Dictionary containing priority-policy buffer items, i.e. mapping objects to last-seen timestamps and latest strides.
+    """
+    
     def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 10):
+        """
+        Initializes a PPBStridePerObject object.
+
+        Parameters
+        ----------
+        prio_order : PrioPolicyOrder
+            Direction of priority policy.
+        window_size : int, default=10
+            Maximum number of strides that are tracked per object in sliding-window fashion.
+        """
         self.window_size = window_size
         self.prio_order = prio_order
 
@@ -74,8 +113,24 @@ class PPBStridePerObject(PrioPolicyBuffer):
     def __len__(self) -> int:
         return len(self.buf)
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
-        # Update strides for currently buffered objects or add new objects
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
+        """
+        Updates strides for currently buffered objects or adds new objects.
+
+        Parameters
+        ----------
+        stream_item : Union[Event, O2OUpdate]
+            In-coming event or object-to-object-update whose associated objects update the buffer.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        NotImplementedError
+            If unsupported stream item is given.
+        """
         curr_ts = stream_item.time
         new_keys = list()
         if isinstance(stream_item, Event):
@@ -96,6 +151,14 @@ class PPBStridePerObject(PrioPolicyBuffer):
                 key_dict[LAST_SEEN] = curr_ts
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
+        """
+        Depending on direction of priority policy, min-max-normalized "rank" for each buffered object is determined based on its average stride. The object with smallest rank is most likely to be removed.
+
+        Returns
+        -------
+        dict[str, float]
+            Mapping of objects to min-max-normalized ranks in [0, 1].
+        """
         # Use maximum last seen timestamp to derive minimum possible stride for objects that were only seen once thus far and therefore have an empty STRIDES list
         max_last_seen = max([buf_dict[LAST_SEEN] for buf_dict in self.buf.values()])
 
@@ -109,6 +172,14 @@ class PPBStridePerObject(PrioPolicyBuffer):
         return min_max_normalize_dict(key_to_val)
     
     def to_string(self) -> str:
+        """
+        Creates string describing priority-policy buffer including its parameters (e.g. direction) and buffered objects in tabular format.
+
+        Returns
+        -------
+        str
+            Output string describing parameters and content of buffer.
+        """
         ret_str = f'Priority-policy buffer characteristics:\n - priority policy: {self.pp.value}\n - most likely to get removed for {self.prio_order.value} value\n - buffer size: {len(self)}\n - window size: {self.window_size}\n'
 
         # Unroll buffer structure: OID -> {LAST_SEEN: timestamp, STRIDES: [timedelta, ...]}
@@ -130,7 +201,7 @@ class PPBStridePerObject(PrioPolicyBuffer):
     
 
 class PPBStridePerObjectType(PrioPolicyBuffer):
-    def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 10, max_obj_per_ot : int = 5, freeze_or_max_idle : bool | pd.Timedelta = None):
+    def __init__(self, prio_order : PrioPolicyOrder, window_size : int = 10, max_obj_per_ot : int = 5, freeze_or_max_idle : Union[bool, pd.Timedelta] = None):
         self.window_size = window_size
         self.max_obj_per_ot = max_obj_per_ot
         self.prio_order = prio_order
@@ -152,7 +223,7 @@ class PPBStridePerObjectType(PrioPolicyBuffer):
             buf_len += len(self.buf[ot])
         return buf_len
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
         # Update strides for currently buffered objects or add new objects
         curr_ts = stream_item.time
         new_keys = list()
@@ -246,7 +317,7 @@ class PPBLifespanPerObject(PrioPolicyBuffer):
     def __len__(self) -> int:
         return len(self.buf)
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
         # Update first-seen and last-seen timestamps for currently buffered objects or add new objects
         curr_ts = stream_item.time
         new_keys = list()
@@ -293,7 +364,7 @@ class PPBLifespanPerObject(PrioPolicyBuffer):
 
 
 class PPBLifespanPerObjectType(PrioPolicyBuffer):
-    def __init__(self, prio_order : PrioPolicyOrder, max_obj_per_ot : int = 5, freeze_or_max_idle : bool | pd.Timedelta = None):
+    def __init__(self, prio_order : PrioPolicyOrder, max_obj_per_ot : int = 5, freeze_or_max_idle : Union[bool, pd.Timedelta] = None):
         self.prio_order = prio_order
         self.max_obj_per_ot = max_obj_per_ot
         self.freeze_objects = False
@@ -314,7 +385,7 @@ class PPBLifespanPerObjectType(PrioPolicyBuffer):
             buf_len += len(self.buf[ot])
         return buf_len
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
         # Update first-seen and last-seen timestamps for currently buffered objects or add new objects
         curr_ts = stream_item.time
         new_keys = list()
@@ -517,7 +588,7 @@ class PPBCustom(PrioPolicyBuffer):
     def __len__(self) -> int:
         return len(self.ot_to_rank)
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
         pass
     
     def get_normalized_rank_by_pp(self) -> dict[str, float]:
@@ -554,7 +625,7 @@ class PPBObjectsPerObjectType(PrioPolicyBuffer):
     def __len__(self) -> int:
         return len(self.buf)
 
-    def update(self, stream_item : Event | O2OUpdate) -> None:
+    def update(self, stream_item : Union[Event, O2OUpdate]) -> None:
         if isinstance(stream_item, Event):
             new_tups = [(d['objectType'], d['objectId']) for d in stream_item.e2o_relations]
         elif isinstance(stream_item, O2OUpdate):
