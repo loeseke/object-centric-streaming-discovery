@@ -52,7 +52,23 @@ PRIORITY_POLICIES_OBJ = [
 ]   
 
 
-def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : int = 100, custom_ppb : list[str] = ['Handling Unit', 'Container', 'Customer Order', 'Vehicle', 'Truck', 'Forklift', 'Transport Document']) -> None:
+def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : int = 100) -> None:
+    """
+    Computes and visualizes average precision, recall, and accuracy of online TOTeM on stream simulated from given log for all combinations of cache policy and priority policy for given, fixed model-buffer sizes.
+    
+    Parameters
+    ----------
+    onl_file_path : str
+        Log in JSON format that is converted into object-centric event stream to process.
+    offl_file_path : str
+        Log in XML format on which TOTeM model is discovered offline for evaluation.
+    buf_size : int, default=100
+        Size shared by all model buffers for all runs.
+
+    Returns
+    -------
+    None
+    """
     offl_model = TotemModel(offl_file_path)
     event_stream = EventStream(onl_file_path)
     for coupled_rm in [True, False]:
@@ -107,6 +123,20 @@ def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : i
 
 
 def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_sizes : list[int]) -> None:
+    """
+    Plots average processing time per stream item against different buffer sizes (per run, all model buffers are set to the same size).
+
+    Parameters
+    ----------
+    onl_file_path : str
+        Log in JSON format that is converted into object-centric event stream to process.
+    buf_sizes : list[int]
+        Different buffer sizes to use for all model buffers.
+
+    Returns
+    -------
+    None
+    """
     event_stream = EventStream(onl_file_path)
     num_processed_items = len(event_stream.events + event_stream.o2o_updates)
     time_df_rows = list()
@@ -149,6 +179,30 @@ def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_siz
 
 
 def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : str, fixed_buf_size : int, buf_sizes : list[int], cp : CachePolicy, pp_buf : Any, coupled_removal : bool) -> None:
+    """
+    Plots evaluation scores against different buffer sizes for one particular model buffer at a time using the given cache and priority policy. The size of all other model buffers is fixed.
+
+    Parameters
+    ----------
+    onl_file_path : str
+        Log in JSON format that is converted into object-centric event stream to process.
+    offl_file_path : str
+        Log in XML format on which TOTeM model is discovered offline for evaluation.
+    fixed_buf_size : int
+        Size of model buffers whose size is fixed.
+    buf_sizes : list[int]
+        Sizes of "varied" model buffer to test.
+    cp : CachePolicy
+        Cache policy of streaming representation to use for all runs.
+    pp_buf : Any
+        Piority-policy buffer of streaming representation to use for all runs.
+    coupled_removal : bool
+        If True, coupled removal is enabled during stream processing for all runs.
+
+    Returns
+    -------
+    None
+    """
     event_stream = EventStream(onl_file_path)
     offl_model = TotemModel(offl_file_path)
 
@@ -201,6 +255,28 @@ def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : st
 
 
 def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf_sizes : list[int],  cp : CachePolicy, pp_buf : Any, coupled_removal : bool) -> None:
+    """
+    Plots average evaluation scores over different buffer sizes for the same stream and streaming representation, i.e. the cache policy, priority policy, and coupled removal are fixed.
+    
+    Parameters
+    ----------
+    onl_file_path : str
+        Log in JSON format that is converted into object-centric event stream to process.
+    offl_file_path : str
+        Log in XML format on which TOTeM model is discovered offline for evaluation.
+    buf_sizes : list[int]
+        Different buffer sizes to use for all model buffers.
+    cp : CachePolicy
+        Cache policy to use for all runs.
+    pp_buf : Any
+        Priority policy to use for all runs.
+    coupled_removal : bool
+        If True, coupled removal is enabled during stream processing for all runs.
+    
+    Returns
+    -------
+    None
+    """
     event_stream = EventStream(onl_file_path)
     offl_model = TotemModel(offl_file_path)
 
@@ -243,6 +319,22 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
 
 
 def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buffer : TotemBuffer) -> None:
+    """
+    Plots evaluation scores over the course of the stream for a given stream and streaming representation.
+
+    Parameters
+    ----------
+    onl_file_path : str
+        Log in JSON format that is converted into object-centric event stream to process.
+    offl_file_path : str
+        Log in XML format on which TOTeM model is discovered offline for evaluation.
+    model_buffer : TotemBuffer
+        Streaming-representation object to process stream on.
+    
+    Returns
+    -------
+    None
+    """
     event_stream = EventStream(onl_file_path)
     offl_model = TotemModel(offl_file_path)
 
@@ -287,48 +379,3 @@ def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buff
         axs[i].legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, y_legend))
 
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
-
-
-if __name__ == '__main__':
-    plot_score_over_stream(
-        onl_file_path='../data/ContainerLogistics.json',
-        offl_file_path='../data/ContainerLogistics.xml',
-        model_buffer=TotemBuffer(
-            10, 
-            10, 
-            10,
-            CachePolicy.LRU, 
-            pp_buf=PPBEventsPerObjectType(prio_order=PrioPolicyOrder.MIN), 
-            coupled_removal=True
-        )
-    )
-
-    plot_avg_score_over_buf_sizes(
-        onl_file_path='../data/ContainerLogistics.json',
-        offl_file_path='../data/ContainerLogistics.xml',
-        buf_sizes=[5] + list(range(50, 1150, 50)),
-        cp=CachePolicy.LFU,
-        pp_buf=None,
-        coupled_removal=True
-    )
-
-    plot_stream_item_processing_time_over_buf_sizes(
-        onl_file_path='../data/ContainerLogistics.json',
-        buf_sizes=list(range(100, 550, 100))
-    )
-
-    plot_heatmap_cp_x_pp(
-        onl_file_path='../data/ContainerLogistics.json',
-        offl_file_path='../data/ContainerLogistics.xml',
-        buf_size=125
-    )
-
-    plot_avg_score_over_varied_buf_size(
-        onl_file_path='../data/ContainerLogistics.json',
-        offl_file_path='../data/ContainerLogistics.xml',
-        fixed_buf_size=5,
-        buf_sizes=[5, 10, 25, 50, 100],
-        cp=CachePolicy.LRU,
-        pp_buf=PPBObjectsPerEvent(PrioPolicyOrder.MAX),
-        coupled_removal=False
-    )

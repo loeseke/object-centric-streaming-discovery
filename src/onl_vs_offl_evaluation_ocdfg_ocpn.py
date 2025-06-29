@@ -18,7 +18,7 @@ from matplotlib.lines import Line2D
 from monitor_evaluation import get_model_output_path
 from pathlib import Path
 import os
-from typing import Any
+from typing import Any, Union
 import time
 
 
@@ -219,7 +219,7 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
         Piority-policy buffer of streaming representation to use for all runs.
     coupled_removal : bool
         If True, coupled removal is enabled during stream processing for all runs.
-    used_mixed_ocdfg_buf : bool, default=True
+    use_mixed_ocdfg_buf : bool, default=True
         If True, OC-DFG model buffers are shared by all object types.
     pp_buf_dfgs : Any, default=None
         Optional priority-policy buffer if model buffers per object type are maintained separately for streaming OC-DFG.
@@ -304,6 +304,37 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
 
 
 def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model_buf_name : str, cp : CachePolicy, pp_buf : Any, coupled_removal : bool, use_mixed_ocdfg_buf : bool = True, pp_buf_dfgs : Any = None) -> None:
+    """
+    Plots average evaluation scores over different buffer sizes for the same stream and streaming representation, i.e. the cache policy, priority policy, and coupled removal are fixed.
+    
+    Parameters
+    ----------
+    file_path : str
+        Log that is converted into object-centric event stream to process.
+    buf_sizes : list[int]
+        Different buffer sizes to use for all model buffers.
+    model_buf_name : str
+        Name of streaming representation to test.
+    cp : CachePolicy
+        Cache policy to use for all runs.
+    pp_buf : Any
+        Priority policy to use for all runs.
+    coupled_removal : bool
+        If True, coupled removal is enabled during stream processing for all runs.
+    use_mixed_ocdfg_buf : bool, default=True
+        If True, OC-DFG model buffers are shared by all object types.
+    pp_buf_dfgs : Any, default=None
+        Optional priority-policy buffer if model buffers per obect type are maintained separately for streaming OC-DFG.
+    
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotImplementedError
+        Error thrown if specified `model_buf_name` is not one of "ocdfg", "ocdfg-per-ot", or "ocpn".
+    """
     event_stream = EventStream(file_path)
     if model_buf_name in ["ocdfg", "ocdfg-per-ot"]:
         offl_model = OcdfgModel(file_path)
@@ -379,7 +410,21 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_score_over_stream(file_path : str, model_buffer : OcdfgBuffer | OcdfgBufferPerObjectType | OcpnBuffer) -> None:
+def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer]) -> None:
+    """
+    Plots evaluation scores over the course of the stream for a given stream and streaming representation.
+
+    Parameters
+    ----------
+    file_path : str
+        Log that is converted into object-centric event stream to process.
+    model_buffer : Union[OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer]
+        Streaming-representation object to process stream on.
+    
+    Returns
+    -------
+    None
+    """
     event_stream = EventStream(file_path)
 
     if isinstance(model_buffer, (OcdfgBuffer, OcdfgBufferPerObjectType)):
@@ -431,46 +476,3 @@ def plot_score_over_stream(file_path : str, model_buffer : OcdfgBuffer | OcdfgBu
         axs[i].legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, y_legend))
 
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
-
-
-if __name__ == '__main__':
-    plot_score_over_stream(
-        file_path='../data/ContainerLogistics.json',
-        model_buffer=OcdfgBuffer(
-            10, 
-            10, 
-            CachePolicy.LRU, 
-            pp_buf=PPBEventsPerObjectType(prio_order=PrioPolicyOrder.MIN), 
-            coupled_removal=True
-        )
-    )
-
-    plot_avg_score_over_buf_sizes(
-        file_path='../../data/AgeOfEmpires10Matches.json',
-        buf_sizes=[5, 250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500], # [5] + list(range(50, 1150, 50)),
-        model_buf_name='ocdfg',
-        cp=CachePolicy.FIFO,
-        pp_buf=None,
-        coupled_removal=False
-    )
-
-    plot_stream_item_processing_time_over_buf_sizes(
-        file_path='../../data/ContainerLogistics.json',
-        buf_sizes=[10, 20], #[25] + list(range(50, 300, 50)) + list(range(250, 800, 250))
-    )
-
-    plot_heatmap_cp_x_pp(
-        file_path='../../data/ContainerLogistics.json',
-        model_buf_name="ocdfg",
-        buf_size=125
-    )
-
-    plot_avg_score_over_varied_buf_size(
-        file_path='../../data/ContainerLogistics.json',
-        model_buf_name="ocdfg",
-        fixed_buf_size=5,
-        buf_sizes=[5, 10, 25, 50, 100],
-        cp=CachePolicy.FIFO,
-        pp_buf=None,
-        coupled_removal=False
-    )

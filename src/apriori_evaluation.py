@@ -3,65 +3,33 @@ Functionality for extracting object-centric characteristics used by priority pol
 __author__: "Nina Löseke"
 """
 
-from utils import *
+from utils import Event, O2OUpdate, ObjectAttributeUpdate, get_mean_timedelta
 import numpy as np
-
-
-def define_skewed_stream() -> list:
-    td_start = pd.Timestamp(year=2023, month=1, day=1)
-    td_end = pd.Timestamp(year=2024, month=1, day=1)
-    td_curr = td_start
-    td_ot_1 = pd.Timedelta(days=30) # pd.Timedelta has no "months" keyword
-    td_ot_2 = pd.Timedelta(weeks=1)
-    td_ot_3 = pd.Timedelta(days=1)
-    events = list()
-    event_id = 0
-
-    # Have weekly & monthly OTs be updated on single object each throughout entire year
-    while td_curr < td_end:
-        new_event = Event(td_curr, event_id, activity='Register object', attributes=[], e2o_relations=[{'objectType': 'Monthly', 'objectId': 'm1'}])
-        events.append(new_event)
-
-        td_curr += td_ot_1
-        event_id += 1
-
-    td_curr = td_start
-    while td_curr < td_end:
-        new_event = Event(td_curr, event_id, activity='Register object', attributes=[], e2o_relations=[{'objectType': 'Weekly', 'objectId': 'w1'}])
-        events.append(new_event)
-
-        td_curr += td_ot_2
-        event_id += 1
-
-    # Only have object type 3 occur between May and August (2nd third of the year)
-    td_start_ot_3 = pd.Timestamp(year=2023, month=5, day=1)
-    td_end_ot_3 = pd.Timestamp(year=2023, month=9, day=1)
-    td_curr_ot_3 = td_start_ot_3
-    step = 1
-    ot_3_obj_id = 1
-    while td_curr_ot_3 < td_end_ot_3:
-        new_event = Event(td_curr_ot_3, event_id, activity='Register object', attributes=[], e2o_relations=[{'objectType': 'Daily', 'objectId': f'd{ot_3_obj_id}'}])
-        events.append(new_event)
-
-        if step % 2 == 0:
-            ot_3_obj_id += 1
-            step = 1
-        else:
-            step += 1
-        td_curr_ot_3 += td_ot_3
-        event_id += 1
-    
-    stream = sorted(events, key=lambda x: x.time)
-    return stream
+import pandas as pd
+from typing import Union, Tuple
             
 
 def __fraction_to_interval_str(frac : float, stride : float = 0.1) -> str:
+    """Translate fraction of stream items with given stride into string indicating percentage interval."""
     upper_bound = str(round(frac * 100, 1))
     lower_bound = str(round((frac-stride) * 100, 1))
     return f'({lower_bound}, {upper_bound}]'
 
 
-def get_ot_frac_across_stream(stream : list) -> Tuple[dict[str, float], dict[str, float], dict[str, float], dict[str, float]]:
+def get_ot_frac_across_stream(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, float], dict[str, float], dict[str, float], dict[str, float]]:
+    """
+    Computes fraction of object types in total, in events, in object-attribute updates, and in object-to-object updates considering entire stream.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+
+    Returns
+    -------
+    Tuple[dict[str, float], dict[str, float], dict[str, float], dict[str, float]]
+        Mapping of object types to total fraction, fraction in events, fraction in object-to-object updates, and fraction in object-attribute updates respectively.
+    """
     ot_to_freq_total = dict()
     ot_to_freq_event = dict()
     ot_to_freq_o2o = dict()
@@ -111,7 +79,20 @@ def get_ot_frac_across_stream(stream : list) -> Tuple[dict[str, float], dict[str
     return ot_to_freq_total, ot_to_freq_event, ot_to_freq_o2o, ot_to_freq_oau
 
 
-def get_num_obj_per_event_per_ot(stream : list) -> Tuple[dict, dict, dict, dict]:
+def get_num_obj_per_event_per_ot(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, list[int]], dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """
+    Counts number of objects per object type per event for whole stream, at 10% stream intervals w.r.t. the number of processed items, and at 10% intervals w.r.t. the time interval spanned by the stream.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+
+    Returns
+    -------
+    Tuple[dict[str, list[int]], dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]
+        Mapping of object types to list of non-zero number of objects per event in chronological order, mapping of types to average number of objects per event, mapping of stream-item intervals to average number of objects per event per object type, mapping of stream-time intervals to average number of objects per event per object type.
+    """
     n_stream = len(stream)
     t_min_stream = stream[0].time
     t_max_stream = stream[-1].time
@@ -167,7 +148,20 @@ def get_num_obj_per_event_per_ot(stream : list) -> Tuple[dict, dict, dict, dict]
     return ot_dict, res_dict, res_dict_per_stream_fraction, res_dict_per_time_fraction
 
 
-def get_num_obj_per_ot(stream : list) -> Tuple[dict, dict, dict]:
+def get_num_obj_per_ot(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """
+    Counts number of unique objects per object type for whole stream, at 10% stream intervals w.r.t. the number of processed items, and at 10% intervals w.r.t. the time interval spanned by the stream.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+
+    Returns
+    -------
+    Tuple[dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]
+        Mapping of object types to total number of unique objects, mapping of stream-item intervals to number of unique objects per object type, mapping of stream-time intervals to number of unique objects per object type.
+    """
     n_stream = len(stream)
     t_min_stream = stream[0].time
     t_max_stream = stream[-1].time
@@ -227,7 +221,20 @@ def get_num_obj_per_ot(stream : list) -> Tuple[dict, dict, dict]:
     return res_dict, res_dict_per_stream_fraction, res_dict_per_time_fraction
 
 
-def get_num_events_per_ot(stream : list) -> Tuple[dict, dict, dict]:
+def get_num_events_per_ot(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]:
+    """
+    Counts number of events per object type for whole stream, at 10% stream intervals w.r.t. the number of processed items, and at 10% intervals w.r.t. the time interval spanned by the stream.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+
+    Returns
+    -------
+    Tuple[dict[str, int], dict[str, dict[str, int]], dict[str, dict[str, int]]]
+        Mapping of object types to total number of events, mapping of stream-item intervals to number of events per object type, mapping of stream-time intervals to number of events per object type.
+    """
     n_stream = len(stream)
     t_min_stream = stream[0].time
     t_max_stream = stream[-1].time
@@ -281,17 +288,20 @@ def get_num_events_per_ot(stream : list) -> Tuple[dict, dict, dict]:
     return ot_dict, ot_dict_per_stream_fraction, ot_dict_per_time_fraction
 
 
-def __get_mean_timedelta(td_list : list) -> pd.Timedelta:
-    # Split computation of mean of list of Timedelta by mean calculation per unit to avoid overflow error when converting too many days via td.total_seconds()
-    tds_round_to_s = [td.as_unit('s') for td in td_list]
-    mean_days = round(np.mean([td.components.days for td in tds_round_to_s]))
-    mean_hours = round(np.mean([td.components.hours for td in tds_round_to_s]))
-    mean_minutes = round(np.mean([td.components.minutes for td in tds_round_to_s]))
-    mean_seconds = round(np.mean([td.components.seconds for td in tds_round_to_s]))
-    return pd.Timedelta(days=mean_days, hours=mean_hours, minutes=mean_minutes, seconds=mean_seconds)
-
-
 def seconds_to_td_str(td_total_seconds : float) -> str:
+    """
+    Converts amount of seconds into compact string of corresponding pandas Timedelta in format "[days-]hours:minutes".
+
+    Parameters
+    ----------
+    td_total_seconds : float
+        Total amount of seconds.
+    
+    Returns
+    -------
+    str
+        String representing corresponding pandas Timedelta.
+    """
     td = pd.Timedelta(seconds=td_total_seconds)
     ret = f'{td.components.hours:02d}:{td.components.minutes:02d}'
     if td.components.days > 0:
@@ -299,7 +309,20 @@ def seconds_to_td_str(td_total_seconds : float) -> str:
     return ret
 
 
-def get_reuse_stride(stream : list) -> Tuple[dict, dict, dict, dict]:
+def get_reuse_stride(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, float], dict[str, float], dict[str, dict[str, float]], dict[str, dict[str, float]]]:
+    """
+    Computes average "stride", i.e. time between re-occurrences of same object in events per object type for whole stream, at stream-item intervals, and at stream-time intervals.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+    
+    Returns
+    -------
+    Tuple[dict[str, float], dict[str, float], dict[str, dict[str, float]], dict[str, dict[str, float]]]
+        Mapping of object types to avg. strides as avg. per object, mapping of types to avg. strides as avg. per object type, mapping of 10% stream-item intervals to avg. stride per type, mapping of 10% stream-time intervals to avg. stride per type.
+    """
     n_stream = len(stream)
     t_min_stream = stream[0].time
     t_max_stream = stream[-1].time
@@ -369,10 +392,10 @@ def get_reuse_stride(stream : list) -> Tuple[dict, dict, dict, dict]:
             if len(ot_dict[ot][obj]) < 1:
                 continue
             else:
-                avg_per_obj[ot].append(__get_mean_timedelta(ot_dict[ot][obj]).total_seconds())
+                avg_per_obj[ot].append(get_mean_timedelta(ot_dict[ot][obj]).total_seconds())
                 ot_all_obj_td += ot_dict[ot][obj]
         if len(ot_all_obj_td) > 0:
-            avg_per_ot[ot] = __get_mean_timedelta(ot_all_obj_td).total_seconds()
+            avg_per_ot[ot] = get_mean_timedelta(ot_all_obj_td).total_seconds()
         
         for frac in frac_keys:
             if ot in ot_dict_per_stream_fraction[frac]: 
@@ -380,19 +403,32 @@ def get_reuse_stride(stream : list) -> Tuple[dict, dict, dict, dict]:
                 for obj in ot_dict_per_stream_fraction[frac][ot]:
                     frac_ot_all_obj_td += ot_dict_per_stream_fraction[frac][ot][obj]
                 if len(frac_ot_all_obj_td) > 0:
-                    ot_avg_per_stream_fraction[frac][ot] = __get_mean_timedelta(frac_ot_all_obj_td).total_seconds()
+                    ot_avg_per_stream_fraction[frac][ot] = get_mean_timedelta(frac_ot_all_obj_td).total_seconds()
 
             if ot in ot_dict_per_time_fraction[frac]:
                 frac_ot_all_obj_td = list()
                 for obj in ot_dict_per_time_fraction[frac][ot]:
                     frac_ot_all_obj_td += ot_dict_per_time_fraction[frac][ot][obj]
                 if len(frac_ot_all_obj_td) > 0:
-                    ot_avg_per_time_fraction[frac][ot] = __get_mean_timedelta(frac_ot_all_obj_td).total_seconds()
+                    ot_avg_per_time_fraction[frac][ot] = get_mean_timedelta(frac_ot_all_obj_td).total_seconds()
     
     return avg_per_obj, avg_per_ot, ot_avg_per_stream_fraction, ot_avg_per_time_fraction
 
 
-def get_lifespan(stream : list) -> Tuple[dict, dict]:
+def get_lifespan(stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]) -> Tuple[dict[str, list[float]], dict[str, float]]:
+    """
+    Records total lifespan of objects per object type throughout entire stream and computes average lifespan per object for each type.
+
+    Parameters
+    ----------
+    stream : list[Union[Event, ObjectAttributeUpdate, O2OUpdate]]
+        Object-centric event stream to evaluate a-priori.
+
+    Returns
+    -------
+    Tuple[dict[str, list[float]], dict[str, float]]
+        Mapping of object types to list of total object lifespans, mapping of object types to average lifespan per object.
+    """
     ot_dict = dict()
     ls_per_obj = dict()
     avg_per_ot = dict()
@@ -425,44 +461,9 @@ def get_lifespan(stream : list) -> Tuple[dict, dict]:
             lifespan_obj = ot_dict[ot][obj]['last'] - ot_dict[ot][obj]['first']
             ls_per_obj[ot].append(lifespan_obj)
         
-        avg_per_ot[ot] = __get_mean_timedelta(ls_per_obj[ot]).total_seconds()
+        avg_per_ot[ot] = get_mean_timedelta(ls_per_obj[ot]).total_seconds()
     
         # Convert per-object time deltas to total seconds
         ls_per_obj[ot] = [td_obj.total_seconds() for td_obj in ls_per_obj[ot]]
 
     return ls_per_obj, avg_per_ot
-
-
-def get_co_occurrence(stream : list) -> Tuple[dict, dict, dict]:
-    ot_dict = dict()
-
-    for item in stream:
-        if isinstance(item, Event):
-            involved_ots = set()
-            for e2o_dict in item.e2o_relations:
-                involved_ots.add(e2o_dict['objectType'])
-
-            for ot in involved_ots:
-                for ot_target in involved_ots:
-                    if ot == ot_target:
-                        continue
-
-                    if ot not in ot_dict:
-                        ot_dict[ot] = dict()
-                    if ot_target not in ot_dict[ot]:
-                        ot_dict[ot][ot_target] = 0
-                    
-                    ot_dict[ot][ot_target] += 1
-        else:
-            continue
-    
-    # Fill in zeroes
-    for ot in ot_dict.keys():
-        for ot_target in ot_dict.keys():
-            if ot == ot_target:
-                continue
-
-            if ot_target not in ot_dict[ot]:
-                ot_dict[ot][ot_target] = 0
-    
-    return ot_dict
