@@ -99,7 +99,7 @@ def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : i
             heatmap_rows_prec.append(pp_dict_prec)
 
         # Create CP x PP heatmap for given coupled-removal setting
-        output_dir = Path('scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
         file_name = f'scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
         os.makedirs(output_dir, exist_ok=True)
 
@@ -158,7 +158,7 @@ def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_siz
 
             time_df_rows.append({'item-processing time': item_processing_time/10**6, 'model-buffer name': model_buf_name, 'buf size': buf_size})
 
-    output_dir = Path('scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
+    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     file_name = f'avg_item_time_over_buf_sizes.pdf'
     os.makedirs(output_dir, exist_ok=True)
 
@@ -226,7 +226,7 @@ def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : st
     
     # Create plot
     pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
+    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     file_name = f'scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
     os.makedirs(output_dir, exist_ok=True)
 
@@ -296,7 +296,7 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
     
     # Create plot
     pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
+    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     file_name = f'scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
     os.makedirs(output_dir, exist_ok=True)
 
@@ -348,7 +348,7 @@ def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buff
         score_df_rows.append(score_dict)
     
     # Create plot
-    output_dir = Path('scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0])) / get_model_output_path(model_buffer)
+    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0])) / get_model_output_path(model_buffer)
     file_name = 'scoring_over_stream.pdf'
     os.makedirs(output_dir, exist_ok=True)
 
