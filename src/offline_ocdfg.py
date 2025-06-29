@@ -172,13 +172,3 @@ def visualize_ocdfg_pm4py(log_file : str, edge_thresh : int = 0, act_thresh : in
     G = apply_ocdfg_to_graphviz(ocdfg_dict, parameters={Parameters.EDGE_THRESHOLD: edge_thresh, Parameters.ACT_THRESHOLD: act_thresh})
     G.render('tmp', format='pdf', cleanup=True)
     os.replace('tmp.pdf', output_parent_dir / output_file)
-
-
-if __name__ == '__main__':
-    logs = ['../data/WorkingExampleTOTeM.xml',
-            '../data/ContainerLogistics.xml',
-            '../data/AgeOfEmpires10Matches.xml']
-    log_id = 2
-
-    discover_ocdfg_offline(logs[log_id])
-    visualize_ocdfg_pm4py(logs[log_id], edge_thresh=200, act_thresh=200)

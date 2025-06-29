@@ -436,13 +436,3 @@ def discover_totem_offline(
             print(f"{t2} -> {t1}:\t TR: {tr_i}\t LC: {lc_i}\t EC: {ec_i}")
 
     return nodes, edges
-
-
-if __name__ == '__main__':
-    logs = ['../data/WorkingExampleTOTeM.xml',
-            '../data/ContainerLogistics.xml']
-    log_id = 0
-
-    nodes, edges = discover_totem_offline(logs[log_id])
-    print(nodes)
-    print('\n', edges)

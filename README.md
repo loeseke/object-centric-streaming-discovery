@@ -22,7 +22,7 @@ pip install -r requirements_ocpa.txt
 
 ## Usage
 
-The `data` directory contains a toy OCEL 2.0 log and scripts for automatically downloading a large container-logistics log \[[5](#5)\] and pre-processing it. Classes and functions for converting a log into an event stream, processing the stream by updating a streaming representation, and mining, visualizing, and evaluating the resulting model are located in the `src` directory.
+The `data` directory contains a small example OCEL 2.0 log and scripts for automatically downloading a large container-logistics log \[[5](#5)\] and pre-processing it. Classes and functions for converting a log into an event stream, processing the stream by updating a streaming representation, and mining, visualizing, and evaluating the resulting model are located in the `src` directory.
 
 ### Downloading OCEL 2.0 log
 

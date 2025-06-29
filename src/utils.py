@@ -511,9 +511,3 @@ class EventStream(object):
         pct_to_chunk[100] = self.stream[eval_stream_percentages[-1][1]:]
         
         return pct_to_chunk
-
-
-# Test log-to-stream parsing with OCEL 2.0 JSON
-if __name__ == "__main__":
-    es = EventStream(os.path.join("../data", "ContainerLogistics.json"), o2o_has_time=False)
-    es.create_stream_chunks()

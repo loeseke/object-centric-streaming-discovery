@@ -60,7 +60,7 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
     Parameters
     ----------
     file_path : str
-        Log that is converted into object-centric event stream to process.
+        Log in JSON format that is converted into object-centric event stream to process.
     model_buf_name : str
         Name of streaming representation, either "ocdfg", "ocdfg-per-ot", or "ocpn".
     buf_size : int, default=100
