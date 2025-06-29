@@ -8,6 +8,7 @@ __author__: "Nina Löseke"
 import xml.etree.ElementTree as ET
 from datetime import datetime
 import pytz
+import os
 
 if __name__ == '__main__':
     # Convert timestamps for ContainerLogistics XML to Python datetime-readable format
@@ -52,3 +53,4 @@ if __name__ == '__main__':
 
     # Write corrected version back to file
     tree.write('ContainerLogistics.xml')
+    os.remove('ContainerLogistics_original.xml')
