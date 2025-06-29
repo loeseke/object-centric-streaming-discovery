@@ -2,7 +2,7 @@
 
 This streaming framework supports the online discovery of <i>Object-Centric Directly-Follows Graphs</i> (OC-DFGs) \[[1](#1)\], <i>Object-Centric Petri Nets</i> (OCPNs) \[[2](#2)\], and <i>Temporal Object Type Models</i> (TOTeM models) \[[3](#3)\] from object-centric event streams. Currently, object-centric event streams are simulated based on OCEL 2.0 logs in JSON format.
 
-<img src="figures/framework_overview.png" alt="Overview of framework for streaming discovery of object-centric model" width="700" style="display:block;margin-left:auto;margin-right:auto;"/>
+<img src="figures/framework_overview.png" alt="Overview of framework for streaming discovery of object-centric model" width="700" />
 
 ## Setup
 
@@ -28,7 +28,7 @@ The `data` directory contains a small example OCEL 2.0 log in XML and JSON forma
 
 ### Downloading OCEL 2.0 logs
 
-The two afore-mentioned large logs can be downloaded automatically with the following commands. The additional pre-processing steps ensure the logs contain uniform timestamp formats, for example, and that the JSONs are indented properly.
+The two afore-mentioned large logs can be downloaded automatically with the following commands. The additional pre-processing steps ensure the logs contain uniform timestamp formats, for example, and that the JSON files are indented properly.
 
 ```bash
 source path/to/pm4py/venv/Scripts/activate
