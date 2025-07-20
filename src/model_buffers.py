@@ -1528,12 +1528,13 @@ class OcpnBuffer(object):
                 
                 ot_to_pp_rank = self.pp_buf.get_normalized_rank_by_pp()
 
-                if self.use_mixed_ocdfg_buf:
-                    self.ocdfg_buf.update_buffers(stream_item, ot_to_pp_rank)
-                else:
-                    # Update buffered DFG models for invovled object types
-                    for dfg_buf in self.ocdfg_buf.dfg_bufs.values(): 
-                        dfg_buf.update_buffers(stream_item)
+            if self.use_mixed_ocdfg_buf:
+                # Update mixed OC-DFG buffers
+                self.ocdfg_buf.update_buffers(stream_item, ot_to_pp_rank)
+            else:
+                # Update buffered DFG models for invovled object types
+                for dfg_buf in self.ocdfg_buf.dfg_bufs.values(): 
+                    dfg_buf.update_buffers(stream_item)
             
             # Update event-activity buffer
             act = stream_item.activity
