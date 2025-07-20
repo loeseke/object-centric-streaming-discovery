@@ -65,7 +65,7 @@ networkx==3.4.2
 notebook==7.3.2
 notebook_shim==0.2.4
 numpy==2.1.3
-ocpa==1.3.3
+ocpa @ git+https://github.com/ocpm/ocpa@de056e0
 overrides==7.7.0
 packaging==24.2
 pandas==2.2.3

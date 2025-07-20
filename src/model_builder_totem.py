@@ -389,7 +389,7 @@ class TotemModel(object):
         -------
         None
         """
-        G = graphviz.Digraph(graph_attr={'label': f'Filter parameter: tau = {tau}\nEdge annotation: LC (EC)', 
+        G = graphviz.Digraph(graph_attr={'label': f'Filter parameter: tau = {self.tau}\nEdge annotation: LC (EC)', 
                                          'fontname': GV_FONT, 'fontsize': GV_GRAPH_FONTSIZE,
                                          'margin': '0.1,0.1', 
                                          'overlap': 'false',
