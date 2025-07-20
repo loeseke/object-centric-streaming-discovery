@@ -393,7 +393,7 @@ class TotemModel(object):
                                          'fontname': GV_FONT, 'fontsize': GV_GRAPH_FONTSIZE,
                                          'margin': '0.1,0.1', 
                                          'overlap': 'false',
-                                         'rankdir': 'TB'})
+                                         'rankdir': 'LR'})
         
         for ot in self.nodes:
             G.node(ot, label=ot, shape='box', fontname=GV_FONT, fontsize=GV_NODE_FONTSIZE, color=ot_to_hex_color[ot])
