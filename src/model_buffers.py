@@ -1176,8 +1176,6 @@ class TotemBuffer(object):
                 for evicted_ot in evicted_ots:
                     full_eviction = evicted_ot not in buffered_ots
                     self.c_mon.register_buf_eviction(evicted_ot, full_eviction, self.ec_buf.buf_name)
-
-        return buf_dict[EVENT_ID]
     
     def create_monitor_dataframes(self) -> None:
         """
@@ -1545,20 +1543,19 @@ class OcpnBuffer(object):
                 curr_ots_to_oids.setdefault(ot, set())
                 curr_ots_to_oids[ot].add(oid)
 
-            unique_event_id = None
             for curr_ot, oid_set in curr_ots_to_oids.items():
                 has_single_obj = len(oid_set) == 1
                 if self.rt_mon is not None:
                     ea_start_time = time.time_ns()
 
-                unique_event_id = self.update_ea_buf(act, {OBJECT_TYPE: curr_ot, HAS_SINGLE_OBJ: has_single_obj}, unique_event_id, ot_to_pp_rank)
+                self.update_ea_buf(act, {OBJECT_TYPE: curr_ot, HAS_SINGLE_OBJ: has_single_obj}, ot_to_pp_rank)
 
                 if self.rt_mon is not None:
                     self.rt_mon.register_buf_update_time(time.time_ns() - ea_start_time, self.ea_buf.buf_name)
         else:
             return
 
-    def update_ea_buf(self, buf_key : str, buf_dict : dict[str, Any], unique_event_id : int = None, ot_to_pp_rank : dict[str, float] = None) -> int:
+    def update_ea_buf(self, buf_key : str, buf_dict : dict[str, Any], ot_to_pp_rank : dict[str, float] = None) -> None:
         """
         Insert new item into OCPN event-activity buffer.
 
@@ -1568,15 +1565,12 @@ class OcpnBuffer(object):
             Key of new buffer item, i.e. activity.
         buf_dict : dict[str, Any]
             Key-value pairs of associated value dictionary that is inserted for given activity.
-        unique_event_id : int, default=None
-            Event ID that is unique w.r.t. IDs already buffered that uniquely identifies event associated with new buffer item.
         ot_to_pp_rank : dict[str, float], default=None
             Optional mapping of object types to priority-policy-based rank.
         
         Returns
         -------
-        int
-            Event ID that uniquely identifies event associated with new buffer item among already buffered events.
+        None
         """
         if self.c_mon is not None:
             num_hits = 1 if buf_key in self.ea_buf.buf else 0
@@ -1604,15 +1598,6 @@ class OcpnBuffer(object):
                 evicted_ot = self.ea_buf.buf[act_pop_key][act_pop_idx][OBJECT_TYPE]
             
             self.ea_buf.remove_item(act_pop_key, act_pop_idx)
-        
-        # Define unused unique event ID (between 0 and ea_buf_size-1) to identify which buffer items belong to the same event
-        if unique_event_id is None:
-            avail_event_ids = set(range(self.ea_buf_size)) - self.ea_buf.get_buffered_nested_values_for_key(EVENT_ID)
-            buf_dict[EVENT_ID] = next(iter(avail_event_ids))
-        else:
-            buf_dict[EVENT_ID] = unique_event_id
-        if buf_dict[EVENT_ID] is None:
-            raise RuntimeError('Cannot assign unique event ID to new OCPN EA-buffer item!')
 
         # Insert/update buffer item for activity
         self.ea_buf.insert_new_item_by_cp(buf_key, buf_dict)
@@ -1623,8 +1608,6 @@ class OcpnBuffer(object):
             if evicted_ot is not None:
                 full_eviction = evicted_ot not in self.ea_buf.get_buffered_nested_values_for_key(OBJECT_TYPE)
                 self.c_mon.register_buf_eviction(evicted_ot, full_eviction, self.ea_buf.buf_name)
-        
-        return buf_dict[EVENT_ID]
     
     def create_monitor_dataframes(self) -> None:
         """
@@ -1652,7 +1635,7 @@ class OcpnBuffer(object):
         ret = f'Coupled removal of OCPN model: {self.coupled_removal}\n'
         ret += f'Underlying (OC-)DFG buffer for OCPN model: {self.ocdfg_buf.__class__.__name__}\n'
 
-        ea_buf_cols = [EA_BUF_KEY, OBJECT_TYPE, HAS_SINGLE_OBJ, EVENT_ID]
+        ea_buf_cols = [EA_BUF_KEY, OBJECT_TYPE, HAS_SINGLE_OBJ]
         if self.cp in [CachePolicy.LFU, CachePolicy.LFU_DA]:
             ea_buf_cols.append(FREQUENCY)
         if self.cp == CachePolicy.LFU_DA:

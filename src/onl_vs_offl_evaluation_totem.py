@@ -52,7 +52,7 @@ PRIORITY_POLICIES_OBJ = [
 ]   
 
 
-def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : int = 100) -> None:
+def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : int = 100, output_dir : Path = None) -> None:
     """
     Computes and visualizes average precision, recall, and accuracy of online TOTeM on stream simulated from given log for all combinations of cache policy and priority policy for given, fixed model-buffer sizes.
     
@@ -64,13 +64,15 @@ def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : i
         Log in XML format on which TOTeM model is discovered offline for evaluation.
     buf_size : int, default=100
         Size shared by all model buffers for all runs.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
 
     Returns
     -------
     None
     """
     offl_model = TotemModel(offl_file_path)
-    event_stream = EventStream(onl_file_path)
+    event_stream = EventStream(onl_file_path, verbose=False)
     for coupled_rm in [True, False]:
         heatmap_rows_acc = list()
         heatmap_rows_rec = list()
@@ -99,9 +101,10 @@ def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : i
             heatmap_rows_prec.append(pp_dict_prec)
 
         # Create CP x PP heatmap for given coupled-removal setting
-        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
-        file_name = f'scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
+        if output_dir is None:
+            output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
         os.makedirs(output_dir, exist_ok=True)
+        file_name = f'totem_scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
 
         fig, axs = plt.subplots(1, 3, figsize=(7,4), sharey=True)
         fig.tight_layout()
@@ -122,7 +125,7 @@ def plot_heatmap_cp_x_pp(onl_file_path : str, offl_file_path : str, buf_size : i
         fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_sizes : list[int]) -> None:
+def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_sizes : list[int], output_dir : Path = None) -> None:
     """
     Plots average processing time per stream item against different buffer sizes (per run, all model buffers are set to the same size).
 
@@ -132,12 +135,14 @@ def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_siz
         Log in JSON format that is converted into object-centric event stream to process.
     buf_sizes : list[int]
         Different buffer sizes to use for all model buffers.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
 
     Returns
     -------
     None
     """
-    event_stream = EventStream(onl_file_path)
+    event_stream = EventStream(onl_file_path, verbose=False)
     num_processed_items = len(event_stream.events + event_stream.o2o_updates)
     time_df_rows = list()
 
@@ -158,9 +163,10 @@ def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_siz
 
             time_df_rows.append({'item-processing time': item_processing_time/10**6, 'model-buffer name': model_buf_name, 'buf size': buf_size})
 
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
-    file_name = f'avg_item_time_over_buf_sizes.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     os.makedirs(output_dir, exist_ok=True)
+    file_name = f'totem_avg_item_time_over_buf_sizes.pdf'
 
     time_df = pd.DataFrame(data=time_df_rows)
 
@@ -178,7 +184,7 @@ def plot_stream_item_processing_time_over_buf_sizes(onl_file_path : str, buf_siz
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : str, fixed_buf_size : int, buf_sizes : list[int], cp : CachePolicy, pp_buf : Any, coupled_removal : bool) -> None:
+def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : str, fixed_buf_size : int, buf_sizes : list[int], cp : CachePolicy, pp_buf : Any, coupled_removal : bool, output_dir : Path = None) -> None:
     """
     Plots evaluation scores against different buffer sizes for one particular model buffer at a time using the given cache and priority policy. The size of all other model buffers is fixed.
 
@@ -198,12 +204,14 @@ def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : st
         Piority-policy buffer of streaming representation to use for all runs.
     coupled_removal : bool
         If True, coupled removal is enabled during stream processing for all runs.
+    output_dir : Path, default=None
+        Output directory where plot is saved.
 
     Returns
     -------
     None
     """
-    event_stream = EventStream(onl_file_path)
+    event_stream = EventStream(onl_file_path, verbose=False)
     offl_model = TotemModel(offl_file_path)
 
     score_rows_acc = list()
@@ -225,10 +233,11 @@ def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : st
             score_rows_rec.append({'varied model buffer': varied_buf_name, 'varied-buffer size': varied_buf_size, 'score': score_dict['recall']})
     
     # Create plot
-    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
-    file_name = f'scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     os.makedirs(output_dir, exist_ok=True)
+    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
+    file_name = f'totem_scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     fig, axs = plt.subplots(1, 3, figsize=(18,4), sharey=True)
     fig.tight_layout()
@@ -254,7 +263,7 @@ def plot_avg_score_over_varied_buf_size(onl_file_path : str, offl_file_path : st
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf_sizes : list[int],  cp : CachePolicy, pp_buf : Any, coupled_removal : bool) -> None:
+def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf_sizes : list[int],  cp : CachePolicy, pp_buf : Any, coupled_removal : bool, output_dir : Path = None) -> None:
     """
     Plots average evaluation scores over different buffer sizes for the same stream and streaming representation, i.e. the cache policy, priority policy, and coupled removal are fixed.
     
@@ -272,12 +281,14 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
         Priority policy to use for all runs.
     coupled_removal : bool
         If True, coupled removal is enabled during stream processing for all runs.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
     
     Returns
     -------
     None
     """
-    event_stream = EventStream(onl_file_path)
+    event_stream = EventStream(onl_file_path, verbose=False)
     offl_model = TotemModel(offl_file_path)
 
     score_df_rows = list()
@@ -295,10 +306,11 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
         print(score_dict)
     
     # Create plot
-    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
-    file_name = f'scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0]), "totem")
     os.makedirs(output_dir, exist_ok=True)
+    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
+    file_name = f'totem_scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('buf size')
@@ -318,7 +330,7 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buffer : TotemBuffer) -> None:
+def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buffer : TotemBuffer, output_dir : Path = None) -> None:
     """
     Plots evaluation scores over the course of the stream for a given stream and streaming representation.
 
@@ -330,12 +342,14 @@ def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buff
         Log in XML format on which TOTeM model is discovered offline for evaluation.
     model_buffer : TotemBuffer
         Streaming-representation object to process stream on.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
     
     Returns
     -------
     None
     """
-    event_stream = EventStream(onl_file_path)
+    event_stream = EventStream(onl_file_path, verbose=False)
     offl_model = TotemModel(offl_file_path)
 
     score_df_rows = list()    
@@ -348,10 +362,11 @@ def plot_score_over_stream(onl_file_path : str, offl_file_path : str, model_buff
         score_df_rows.append(score_dict)
     
     # Create plot
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0])) / get_model_output_path(model_buffer)
-    file_name = 'scoring_over_stream.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(onl_file_path)[0])) / get_model_output_path(model_buffer)
     os.makedirs(output_dir, exist_ok=True)
-
+    file_name = 'totem_scoring_over_stream.pdf'
+    
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('pct')
 

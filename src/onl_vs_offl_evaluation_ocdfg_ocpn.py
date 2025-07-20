@@ -53,7 +53,7 @@ PRIORITY_POLICIES_OBJ = [
 ]   
 
 
-def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int = 100) -> None:
+def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int = 100, output_dir : Path = None) -> None:
     """
     Computes and visualizes average precision, recall, and accuracy of online model on stream simulated from given log for all combinations of cache policy and priority policy for given, fixed model-buffer sizes.
     
@@ -65,6 +65,8 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
         Name of streaming representation, either "ocdfg", "ocdfg-per-ot", or "ocpn".
     buf_size : int, default=100
         Size shared by all model buffers of streaming representation for all runs.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
 
     Returns
     -------
@@ -82,7 +84,7 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
     else:
         raise NotImplementedError('Unsupported model name! Try "ocdfg", "ocdfg-per-ot", or "ocpn".')
 
-    event_stream = EventStream(file_path)
+    event_stream = EventStream(file_path, verbose=False)
     for coupled_rm in [True, False]:
         heatmap_rows_acc = list()
         heatmap_rows_rec = list()
@@ -123,9 +125,10 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
             heatmap_rows_prec.append(pp_dict_prec)
 
         # Create CP x PP heatmap for given coupled-removal setting
-        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
-        file_name = f'scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
+        if output_dir is None:
+            output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
         os.makedirs(output_dir, exist_ok=True)
+        file_name = f'{model_buf_name}_scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
 
         fig, axs = plt.subplots(1, 3, figsize=(7,4), sharey=True)
         fig.tight_layout()
@@ -146,7 +149,7 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
         fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes : list[int]) -> None:
+def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes : list[int], output_dir : Path = None) -> None:
     """
     Plots average processing time per stream item against different buffer sizes (per run, all model buffers are set to the same size).
 
@@ -156,12 +159,14 @@ def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes :
         Log that is converted into object-centric event stream to process.
     buf_sizes : list[int]
         Different buffer sizes to use for all model buffers.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
     
     Returns
     -------
     None
     """
-    event_stream = EventStream(file_path)
+    event_stream = EventStream(file_path, verbose=False)
     num_processed_items = len(event_stream.events)
     time_df_rows = list()
     for buf_size in buf_sizes:
@@ -179,9 +184,10 @@ def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes :
 
             time_df_rows.append({'event-processing time': ev_processing_time/10**6, 'model-buffer name': model_buf_name, 'buf size': buf_size})
     
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), "ocdfg")
-    file_name = f'avg_item_time_over_buf_sizes.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), "ocdfg")
     os.makedirs(output_dir, exist_ok=True)
+    file_name = f'{model_buf_name}_avg_item_time_over_buf_sizes.pdf'
 
     time_df = pd.DataFrame(data=time_df_rows)
 
@@ -199,7 +205,7 @@ def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes :
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, buf_sizes : list[int], model_buf_name : str, cp : CachePolicy, pp_buf : Any, coupled_removal : bool, use_mixed_ocdfg_buf : bool = True, pp_buf_dfgs : Any = None) -> None:
+def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, buf_sizes : list[int], model_buf_name : str, cp : CachePolicy, pp_buf : Any, coupled_removal : bool, use_mixed_ocdfg_buf : bool = True, pp_buf_dfgs : Any = None, output_dir : Path = None) -> None:
     """
     Plots evaluation scores against different buffer sizes for one particular model buffer at a time using the given cache and priority policy. The size of all other model buffers is fixed.
 
@@ -223,6 +229,8 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
         If True, OC-DFG model buffers are shared by all object types.
     pp_buf_dfgs : Any, default=None
         Optional priority-policy buffer if model buffers per object type are maintained separately for streaming OC-DFG.
+    output_dir : Path, default=None
+        Path to output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
 
     Returns
     -------
@@ -233,7 +241,7 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
     NotImplementedError
         Error thrown if specified `model_buf_name` is not one of "ocdfg", "ocdfg-per-ot", or "ocpn".
     """
-    event_stream = EventStream(file_path)
+    event_stream = EventStream(file_path, verbose=False)
     if model_buf_name in ["ocdfg", "ocdfg-per-ot"]:
         offl_model = OcdfgModel(file_path)
     elif model_buf_name == "ocpn":
@@ -274,10 +282,11 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
             score_rows_rec.append({'varied model buffer': varied_buf_name, 'varied-buffer size': varied_buf_size, 'score': score_dict['recall']})
     
     # Create plot
-    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
-    file_name = f'scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
     os.makedirs(output_dir, exist_ok=True)
+    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
+    file_name = f'{model_buf_name}_scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     fig, axs = plt.subplots(1, 3, figsize=(18,4), sharey=True)
     fig.tight_layout()
@@ -303,7 +312,7 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model_buf_name : str, cp : CachePolicy, pp_buf : Any, coupled_removal : bool, use_mixed_ocdfg_buf : bool = True, pp_buf_dfgs : Any = None) -> None:
+def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model_buf_name : str, cp : CachePolicy, pp_buf : Any, coupled_removal : bool, use_mixed_ocdfg_buf : bool = True, pp_buf_dfgs : Any = None, output_dir : Path = None) -> None:
     """
     Plots average evaluation scores over different buffer sizes for the same stream and streaming representation, i.e. the cache policy, priority policy, and coupled removal are fixed.
     
@@ -325,6 +334,8 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
         If True, OC-DFG model buffers are shared by all object types.
     pp_buf_dfgs : Any, default=None
         Optional priority-policy buffer if model buffers per obect type are maintained separately for streaming OC-DFG.
+    output_dir : Path, default=None
+        Output directory where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
     
     Returns
     -------
@@ -335,7 +346,7 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
     NotImplementedError
         Error thrown if specified `model_buf_name` is not one of "ocdfg", "ocdfg-per-ot", or "ocpn".
     """
-    event_stream = EventStream(file_path)
+    event_stream = EventStream(file_path, verbose=False)
     if model_buf_name in ["ocdfg", "ocdfg-per-ot"]:
         offl_model = OcdfgModel(file_path)
     elif model_buf_name == "ocpn":
@@ -371,13 +382,13 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
         
         score_dict['buf size'] = buf_size
         score_df_rows.append(score_dict)
-        print(score_dict)
     
     # Create plot
-    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
-    file_name = f'scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
     os.makedirs(output_dir, exist_ok=True)
+    pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
+    file_name = f'{model_buf_name}_scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('buf size')
@@ -410,7 +421,7 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
     fig.savefig(output_dir / file_name, format='pdf', bbox_inches='tight')
 
 
-def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer]) -> None:
+def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer], output_dir : Path = None) -> None:
     """
     Plots evaluation scores over the course of the stream for a given stream and streaming representation.
 
@@ -420,17 +431,21 @@ def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, Oc
         Log that is converted into object-centric event stream to process.
     model_buffer : Union[OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer]
         Streaming-representation object to process stream on.
+    output_dir : Path, default=None
+        Output direcotry where plot is saved. Defaults to ../scoring_output/<log name>/<model name>.
     
     Returns
     -------
     None
     """
-    event_stream = EventStream(file_path)
+    event_stream = EventStream(file_path, verbose=False)
 
     if isinstance(model_buffer, (OcdfgBuffer, OcdfgBufferPerObjectType)):
         offl_model = OcdfgModel(file_path)
+        model_buf_name = 'ocdfg' if isinstance(model_buffer, OcdfgBuffer) else 'ocdfg-per-ot'
     else:
         offl_model = OcpnModel(file_path)
+        model_buf_name = 'ocpn'
 
     score_df_rows = list()    
     for pct, stream_chunk in event_stream.create_stream_chunks().items():
@@ -446,9 +461,10 @@ def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, Oc
         score_df_rows.append(score_dict)
     
     # Create plot
-    output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0])) / get_model_output_path(model_buffer)
-    file_name = 'scoring_over_stream.pdf'
+    if output_dir is None:
+        output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0])) / get_model_output_path(model_buffer)
     os.makedirs(output_dir, exist_ok=True)
+    file_name = f'{model_buf_name}_scoring_over_stream.pdf'
 
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('pct')

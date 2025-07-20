@@ -281,7 +281,7 @@ def parse_ocel2_json_object_updates(objects_dict : list[dict[str, str]]) -> list
     return object_updates
     
 
-def parse_ocel2_json_o2o_updates(objects_dict : list[dict[str, str]], min_ts_per_obj_id : dict[str, pd.Timestamp], o2o_has_time : bool = False) -> list[O2OUpdate]:
+def parse_ocel2_json_o2o_updates(objects_dict : list[dict[str, str]], min_ts_per_obj_id : dict[str, pd.Timestamp], o2o_has_time : bool = False, verbose : bool = False) -> list[O2OUpdate]:
     """
     Creates time-ordered list of O2OUpdates from specification of objects according to OCEL 2.0 JSON exchange format.
     
@@ -293,6 +293,8 @@ def parse_ocel2_json_o2o_updates(objects_dict : list[dict[str, str]], min_ts_per
         Mapping of objects to timestamps of their first occurrences in the log.
     o2o_has_time : bool, default=False
         If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+    verbose : bool, default=False
+        If enabled, information about parsed log is printed.
 
     Returns
     -------
@@ -331,13 +333,14 @@ def parse_ocel2_json_o2o_updates(objects_dict : list[dict[str, str]], min_ts_per
                 else:
                     obj_ids_wo_type.append(target_id)
     
-    print(f'# of (removed) O2O target objects w/o type: {len(set(obj_ids_wo_type))}')
+    if verbose:
+        print(f'# of (removed) O2O target objects w/o type: {len(set(obj_ids_wo_type))}')
 
     o2o_updates = sorted(o2o_updates, key=lambda x: x.time)
     return o2o_updates
 
 
-def parse_ocel2_json_events(events_dict : list[dict[str, Any]], objects_dict : list[dict[str, Any]]) -> Tuple[list[Event], list[O2OUpdate], dict[str, pd.Timestamp]]:
+def parse_ocel2_json_events(events_dict : list[dict[str, Any]], objects_dict : list[dict[str, Any]], verbose : bool = False) -> Tuple[list[Event], list[O2OUpdate], dict[str, pd.Timestamp]]:
     """
     Creates time-ordered list of Events from specification of objects according to OCEL 2.0 JSON exchange format. Additionally, the timestamp of the first occurrence of an object in an event is extracted. "Enriched" object-to-object updates derived from the event-to-object relations are also defined.
 
@@ -347,6 +350,8 @@ def parse_ocel2_json_events(events_dict : list[dict[str, Any]], objects_dict : l
         List of events from OCEL 2.0 JSON file.
     objects_dict : list[dict[str, Any]]
         List of objects from OCEL 2.0 JSON file.
+    verbose : bool, default=False
+        If enabled, information about parsed log is printed.
 
     Returns
     -------
@@ -407,14 +412,15 @@ def parse_ocel2_json_events(events_dict : list[dict[str, Any]], objects_dict : l
                 )
             )
 
-    print(f'# of (removed) E2O target objects w/o type: {len(set(e2o_oids_wo_type))}')
+    if verbose:
+        print(f'# of (removed) E2O target objects w/o type: {len(set(e2o_oids_wo_type))}')
 
     events.sort(key=lambda x: x.time)
     enriched_o2o_updates.sort(key=lambda x: x.time)
     return events, enriched_o2o_updates, min_ts_per_obj_id
 
 
-def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list[Event], list[ObjectAttributeUpdate], list[O2OUpdate], list[O2OUpdate], list[str]]:
+def parse_ocel2_json(file_path : str, o2o_has_time : bool = False, verbose : bool = False) -> Tuple[list[Event], list[ObjectAttributeUpdate], list[O2OUpdate], list[O2OUpdate], list[str]]:
     """
     Extracts time-ordered lists of events, (enriched) object-to-object-updates, and object-attribute updates from given OCEL 2.0 in JSON exchange format. Additionally, the object types are extracted.
 
@@ -424,6 +430,8 @@ def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list
         Path to OCEL 2.0 JSON file.
     o2o_has_time : bool, default=False
         If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+    verbose : bool, default=False
+        If enabled, information about parsed log is printed.
 
     Returns
     -------
@@ -434,9 +442,9 @@ def parse_ocel2_json(file_path : str, o2o_has_time : bool = False) -> Tuple[list
         # NOTE: OCEL JSON dict has keys 'objectTypes', 'eventTypes', 'objects', 'events'
         ocel_dict = json.load(ocel_file)
 
-    events, enriched_o2o_updates, min_ts_per_obj_id = parse_ocel2_json_events(ocel_dict['events'], ocel_dict['objects'])
+    events, enriched_o2o_updates, min_ts_per_obj_id = parse_ocel2_json_events(ocel_dict['events'], ocel_dict['objects'], verbose)
     object_updates = parse_ocel2_json_object_updates(ocel_dict['objects'])
-    o2o_updates = parse_ocel2_json_o2o_updates(ocel_dict['objects'], min_ts_per_obj_id, o2o_has_time)
+    o2o_updates = parse_ocel2_json_o2o_updates(ocel_dict['objects'], min_ts_per_obj_id, o2o_has_time, verbose)
 
     return events, object_updates, o2o_updates, enriched_o2o_updates, [ot_dict['name'] for ot_dict in ocel_dict['objectTypes']]
 
@@ -461,7 +469,7 @@ class EventStream(object):
         Simulates object-centric event stream as time-ordered lists of events, object-attribute updates, or object-to-object updates as stream items.
     """
     
-    def __init__(self, file_path : str, enrich_o2o : bool = False, o2o_has_time : bool = False):
+    def __init__(self, file_path : str, enrich_o2o : bool = False, o2o_has_time : bool = False, verbose : bool = False):
         """
         Creates an object-centric event stream for a given OCEL 2.0 log in JSON exchange format.
 
@@ -473,14 +481,18 @@ class EventStream(object):
             If True, object-to-object updates derived from event-to-object relations is added into stream. Alternatively, these "enriched" O2OUpdates can be added to the stream during stream processing for incoming events.
         o2o_has_time : bool, default=False
             If True, an associated timestamp is stored along object-to-object updates in the OCEL 2.0 JSON file. If False, the timestamp is derived from the source object's initial occurrence.
+        verbose : bool, default=False
+            If enabled, information about parsed log is printed.
         """
-        print(f'Parsing {file_path}...')
-        start_time = time.time()
+        if verbose:
+            print(f'Parsing {file_path}...')
+            start_time = time.time()
 
-        self.events, self.object_updates, self.o2o_updates, self.enriched_o2o_updates, self.object_types = parse_ocel2_json(file_path, o2o_has_time)
+        self.events, self.object_updates, self.o2o_updates, self.enriched_o2o_updates, self.object_types = parse_ocel2_json(file_path, o2o_has_time, verbose)
 
         # Print statistics for parsed event log
-        print(f'# events:\t\t\t{len(self.events)}\n# object updates:\t\t{len(self.object_updates)}\n# O2O relations:\t\t{len(self.o2o_updates)}\n# E2O-derived O2O relations:\t{len(self.enriched_o2o_updates)}\nEnriching enabled: {enrich_o2o}')
+        if verbose:
+            print(f'# events:\t\t\t{len(self.events)}\n# object updates:\t\t{len(self.object_updates)}\n# O2O relations:\t\t{len(self.o2o_updates)}\n# E2O-derived O2O relations:\t{len(self.enriched_o2o_updates)}\nEnriching enabled: {enrich_o2o}')
 
         # Represent "stream" as list of Event, ObjectAttributeUpdate, O2OUpdate, and E2OUpdate objects sorted by timestamp
         if not enrich_o2o:
@@ -488,7 +500,8 @@ class EventStream(object):
         else:
             self.stream = sorted(self.events + self.object_updates + self.o2o_updates + self.enriched_o2o_updates, key=lambda x: x.time)
         
-        print(f'Finished parsing {file_path} in {(time.time()-start_time)/60:.2f} min.')
+        if verbose:
+            print(f'Finished parsing {file_path} in {(time.time()-start_time)/60:.2f} min.')
     
     def create_stream_chunks(self) -> dict[int, list[Union[Event, O2OUpdate, ObjectAttributeUpdate]]]:
         """

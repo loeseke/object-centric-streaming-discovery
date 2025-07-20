@@ -95,20 +95,20 @@ class OcpnModel(object):
         self.ocpn[OCPN_DOUBLE_ARCS] = {ot: dict() for ot in self.model.ea_buf.get_buffered_nested_values_for_key(OBJECT_TYPE)}
         # Adapted from pm4py; source: https://github.com/process-intelligence-solutions/pm4py/blob/release/pm4py/algo/discovery/ocel/ocpn/variants/classic.py#L130
         for act_key, act_dicts in self.model.ea_buf.buf.items():
-            event_ids = dict()
+            event_count = dict()
             single_obj_count = dict()
             for act_dict in act_dicts:
                 ot = act_dict[OBJECT_TYPE]
 
-                event_ids.setdefault(ot, set())
-                event_ids[ot].add(act_dict[EVENT_ID])
+                event_count.setdefault(ot, 0)
+                event_count[ot] += 1
 
                 single_obj_count.setdefault(ot, 0)
                 if act_dict[HAS_SINGLE_OBJ]:
                     single_obj_count[ot] += 1
 
             for ot in single_obj_count:
-                self.ocpn[OCPN_DOUBLE_ARCS][ot][act_key] = single_obj_count[ot] / len(event_ids[ot]) <= self.double_arc_thresh
+                self.ocpn[OCPN_DOUBLE_ARCS][ot][act_key] = single_obj_count[ot] / event_count[ot] <= self.double_arc_thresh
 
     def __create_pn_per_ot(self) -> None:
         """Discover Petri nets per object type from OcdfgPerObjectType."""
