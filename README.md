@@ -54,7 +54,7 @@ Example workflow for creating event stream, defining parameters of streaming rep
 
 ```python
 from utils import EventStream
-from model_buffers import OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer, TotemBuffer
+from model_buffers import OcdfgBuffer
 from cache_policy_buffers import CachePolicy
 from priority_policy_buffers import PPBLifespanPerObject, PrioPolicyOrder
 
@@ -81,8 +81,6 @@ Assume `ocdfg_buf` and `event_stream` as above. Models are mined and visualized 
 ```python
 [...]
 from model_builder_ocdfg import OcdfgModel
-from model_builder_ocpn import OcpnModel
-from model_builder_totem import TotemModel
 import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
