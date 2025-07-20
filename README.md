@@ -70,8 +70,8 @@ ocdfg_buf = OcdfgBuffer(
     coupled_removal=False
 )
 
-# Process entire stream; can enable/disable that additional O2O relations are derived from in-coming events
-ocdfg_buf.process_stream(event_stream.stream, enrich_o2o=False)
+# Process entire stream; can enable/disable that additional O2O relations are derived from in-coming events for TOTeM via enrich_o2o argument
+ocdfg_buf.process_stream(event_stream.stream)
 ```
 
 ### Discovering and visualizing model from streaming representation
@@ -84,6 +84,7 @@ from model_builder_ocdfg import OcdfgModel
 import matplotlib as mpl
 import matplotlib.cm as cm
 import numpy as np
+from pathlib import Path
 
 # Here, 10% of least frequent nodes and arcs are removed from resulting OC-DFG
 ocdfg_model = OcdfgModel(ocdfg_buf, prune_node_frac=0.1, prune_arc_frac=0.1, verbose=False)
@@ -93,7 +94,7 @@ ots = sorted(event_stream.object_types)
 ot_rgb_colors = cm.jet(np.linspace(0, 1, len(ots)))
 ot_to_rgb_color = dict(zip(ots, ot_rgb_colors))
 ot_to_hex_color = {ot: mpl.colors.rgb2hex(ot_rgb) for ot, ot_rgb in ot_to_rgb_color.items()}
-ocdfg_model.visualize(path/to/output/directory, 'ocdfg.pdf', ot_to_hex_color, visualize_dfgs=True)
+ocdfg_model.visualize(Path(path/to/output/directory), 'ocdfg.pdf', ot_to_hex_color, visualize_dfgs=False)
 ```
 
 ### Evaluation
