@@ -303,7 +303,6 @@ def plot_avg_score_over_buf_sizes(onl_file_path : str, offl_file_path : str, buf
         score_dict['EC accuracy'] = score_dict_annot['EC accuracy']
         score_dict['buf size'] = buf_size
         score_df_rows.append(score_dict)
-        print(score_dict)
     
     # Create plot
     if output_dir is None:

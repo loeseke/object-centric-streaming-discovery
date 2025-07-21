@@ -128,8 +128,7 @@ visualize_ocdfg_overlap(
 )
 
 # Plot average scores for accuracy, precision, and recall for all combinations of cache and priority policy as heatmap
-# Resulting PDF is saved to "scoring_output" folder at root level
-plot_heatmap_cp_x_pp(path/to/json/ocel, 'ocdfg', buf_size=20)
+plot_heatmap_cp_x_pp(path/to/json/ocel, 'ocdfg', buf_size=20, output_dir=path/to/output/directory)
 ```
 Note that the offline TOTeM model requires an XML input log, since `ocpa` is used for importing OCELs, however, JSON logs work fine for offline OC-DFGs and OCPNs. The above steps can be implemented analogously for TOTeM via `model_builder_totem.py` and `onl_vs_offl_evaluation_totem.py`.
 
@@ -138,7 +137,7 @@ The runtime and cache behavior during stream processing can be recorded via opti
 ```python
 from utils import EventStream
 from model_buffers import TotemBuffer
-from monitor import CacheMonitor, RuntimeMonitor
+from monitor import CacheMonitor
 from cache_policy_buffers import CachePolicy
 from priority_policy_buffers import PrioPolicyOrder, PPBEventsPerObjectType
 
