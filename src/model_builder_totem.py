@@ -437,9 +437,9 @@ def get_totem_accuracy(offline : TotemModel, online : TotemModel) -> dict[str, f
     node_tn = len(onl_neg_nodes.intersection(offl_neg_nodes))
     node_fn = len(onl_neg_nodes - offl_neg_nodes)
 
-    node_acc = (node_tp + node_tn) / (node_tp + node_fp + node_tn + node_fn) if node_tp + node_fp + node_tn + node_fn > 0 else None
-    node_prec = node_tp / (node_tp + node_fp) if node_tp + node_fp > 0 else None
-    node_rec = node_tp / (node_tp + node_fn) if node_tp + node_fn > 0 else None
+    node_acc = (node_tp + node_tn) / (node_tp + node_fp + node_tn + node_fn) if node_tp + node_fp + node_tn + node_fn > 0 else 0
+    node_prec = node_tp / (node_tp + node_fp) if node_tp + node_fp > 0 else 0
+    node_rec = node_tp / (node_tp + node_fn) if node_tp + node_fn > 0 else 0
 
     # Compute arc accuracy based on confusion matrix
     possible_arcs = set(itertools.product(all_nodes, all_nodes))
@@ -453,24 +453,24 @@ def get_totem_accuracy(offline : TotemModel, online : TotemModel) -> dict[str, f
     arc_tn = len(onl_neg_arcs.intersection(offl_neg_arcs))
     arc_fn = len(onl_neg_arcs - offl_neg_arcs)
 
-    arc_acc = (arc_tp + arc_tn) / (arc_tp + arc_tn + arc_fp + arc_fn) if arc_tp + arc_tn + arc_fp + arc_fn > 0 else None
-    arc_prec = arc_tp / (arc_tp + arc_fp) if arc_tp + arc_fp > 0 else None
-    arc_rec = arc_tp / (arc_tp + arc_fn) if arc_tp + arc_fn > 0 else None
+    arc_acc = (arc_tp + arc_tn) / (arc_tp + arc_tn + arc_fp + arc_fn) if arc_tp + arc_tn + arc_fp + arc_fn > 0 else 0
+    arc_prec = arc_tp / (arc_tp + arc_fp) if arc_tp + arc_fp > 0 else 0
+    arc_rec = arc_tp / (arc_tp + arc_fn) if arc_tp + arc_fn > 0 else 0
 
     # Compute distance-based accuracy of arc annotations
     shared_arcs = onl_pos_arcs.intersection(offl_pos_arcs)
     num_shared_arcs = len(shared_arcs)
     tr_err = sum([abs(TR_TO_RANK[online.edges[arc]['TR']] - TR_TO_RANK[offline.edges[arc]['TR']]) for arc in shared_arcs])
     max_possible_tr_err = num_shared_arcs * MAX_TR_DIST
-    tr_annot_acc = 1 - tr_err / max_possible_tr_err if max_possible_tr_err > 0 else None
+    tr_annot_acc = 1 - tr_err / max_possible_tr_err if max_possible_tr_err > 0 else 0
 
     ec_err = sum([abs(EC_TO_RANK[online.edges[arc]['EC']] - EC_TO_RANK[offline.edges[arc]['EC']]) for arc in shared_arcs])
     max_possible_ec_err = num_shared_arcs * MAX_EC_DIST
-    ec_annot_acc = 1 - ec_err / max_possible_ec_err if max_possible_ec_err > 0 else None
+    ec_annot_acc = 1 - ec_err / max_possible_ec_err if max_possible_ec_err > 0 else 0
     
     lc_err = sum([abs(LC_TO_RANK[online.edges[arc]['LC']] - LC_TO_RANK[offline.edges[arc]['LC']]) for arc in shared_arcs])
     max_possible_lc_err = num_shared_arcs * MAX_LC_DIST
-    lc_annot_acc = 1 - lc_err / max_possible_lc_err if max_possible_lc_err > 0 else None
+    lc_annot_acc = 1 - lc_err / max_possible_lc_err if max_possible_lc_err > 0 else 0
 
     # Compute "binary" accuracy of arc annotations
     # tr_err = 0.0
@@ -522,9 +522,9 @@ def get_totem_avg_scores(offline : TotemModel, online : TotemModel) -> dict[str,
     filtered_prec_scores = [prec for prec in prec_scores if prec is not None]
     filtered_acc_scores = [acc for acc in acc_scores if acc is not None]
     
-    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else None,
-            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else None,
-            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else None}
+    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else 0,
+            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else 0,
+            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else 0}
 
 
 def visualize_totem_overlap(offline : TotemModel, online : TotemModel, output_dir : Path, output_file : str, ot_to_hex_color : dict[str, Any]) -> None:

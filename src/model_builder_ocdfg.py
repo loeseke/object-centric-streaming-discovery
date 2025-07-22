@@ -799,9 +799,9 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
     node_tn = len(onl_neg_nodes.intersection(offl_neg_nodes))
     node_fn = len(onl_neg_nodes - offl_neg_nodes)
 
-    node_acc = (node_tp + node_tn) / (node_tp + node_tn + node_fp + node_fn) if node_tp + node_tn + node_fp + node_fn > 0 else None
-    node_prec = node_tp / (node_tp + node_fp) if node_tp + node_fp > 0 else None
-    node_rec = node_tp / (node_tp + node_fn) if node_tp + node_fn > 0 else None
+    node_acc = (node_tp + node_tn) / (node_tp + node_tn + node_fp + node_fn) if node_tp + node_tn + node_fp + node_fn > 0 else 0
+    node_prec = node_tp / (node_tp + node_fp) if node_tp + node_fp > 0 else 0
+    node_rec = node_tp / (node_tp + node_fn) if node_tp + node_fn > 0 else 0
 
     # Compute inner arc accuracy & precision per OT based on confusion matrix
     onl_ots = set(online.source_sink_nodes.keys())
@@ -830,9 +830,9 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
     arc_fn = len(onl_neg_ot_arcs - offl_neg_ot_arcs)
     arc_tn = len(onl_neg_ot_arcs.intersection(offl_neg_ot_arcs))
 
-    arc_acc = (arc_tp + arc_tn) / (arc_tp + arc_tn + arc_fp + arc_fn) if arc_tp + arc_tn + arc_fp + arc_fn > 0 else None
-    arc_prec = arc_tp / (arc_tp + arc_fp) if arc_tp + arc_fp > 0 else None
-    arc_rec = arc_tp / (arc_tp + arc_fn) if arc_tp + arc_fn > 0 else None
+    arc_acc = (arc_tp + arc_tn) / (arc_tp + arc_tn + arc_fp + arc_fn) if arc_tp + arc_tn + arc_fp + arc_fn > 0 else 0
+    arc_prec = arc_tp / (arc_tp + arc_fp) if arc_tp + arc_fp > 0 else 0
+    arc_rec = arc_tp / (arc_tp + arc_fn) if arc_tp + arc_fn > 0 else 0
 
     # Compute mean absolute error for total activity-node frequencies
     onl_nodes = set(online.nodes.keys())
@@ -843,7 +843,7 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
     for node in shared_nodes:
         total_node_freq_err += abs(sum(offline.nodes[node].values()) - sum(online.nodes[node].values()))
     
-    total_node_freq_mae = total_node_freq_err / num_shared_nodes if num_shared_nodes > 0 else None
+    total_node_freq_mae = total_node_freq_err / num_shared_nodes if num_shared_nodes > 0 else 0
 
     # Compute mean absolute error for inner arc frequencies
     onl_pos_arcs = set(online.arcs.keys())
@@ -857,7 +857,7 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
         for ot in shared_arc_ots:
             arc_freq_err += abs(offline.arcs[arc][ot] - online.arcs[arc][ot])
     
-    arc_freq_mae = arc_freq_err / num_shared_ot_arcs if num_shared_ot_arcs > 0 else None
+    arc_freq_mae = arc_freq_err / num_shared_ot_arcs if num_shared_ot_arcs > 0 else 0
 
     # Compute accuracy & precision of source/sink nodes based on confusion matrix
     onl_pos_source_sinks = set(itertools.chain.from_iterable(online.source_sink_nodes.values()))
@@ -871,9 +871,9 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
     source_sink_tn = len(onl_neg_source_sinks.intersection(offl_neg_source_sinks))
     source_sink_fn = len(onl_neg_source_sinks - offl_neg_source_sinks)
 
-    source_sink_acc = (source_sink_tp + source_sink_tn) / (source_sink_tp + source_sink_tn + source_sink_fp + source_sink_fn) if source_sink_tp + source_sink_tn + source_sink_fp + source_sink_fn > 0 else None
-    source_sink_prec = source_sink_tp / (source_sink_tp + source_sink_fp) if source_sink_tp + source_sink_fp > 0 else None
-    source_sink_rec = source_sink_tp / (source_sink_tp + source_sink_fn) if source_sink_tp + source_sink_fn > 0 else None
+    source_sink_acc = (source_sink_tp + source_sink_tn) / (source_sink_tp + source_sink_tn + source_sink_fp + source_sink_fn) if source_sink_tp + source_sink_tn + source_sink_fp + source_sink_fn > 0 else 0
+    source_sink_prec = source_sink_tp / (source_sink_tp + source_sink_fp) if source_sink_tp + source_sink_fp > 0 else 0
+    source_sink_rec = source_sink_tp / (source_sink_tp + source_sink_fn) if source_sink_tp + source_sink_fn > 0 else 0
 
     # Compute accuracy & precision of source/sink arcs per OT based on confusion matrix
     onl_ots = set(online.source_sink_arcs.keys())
@@ -901,9 +901,9 @@ def get_ocdfg_accuracy(offline: OcdfgModel, online : OcdfgModel) -> dict[str, fl
     source_sink_arc_tn = len(onl_neg_source_sink_arcs.intersection(offl_neg_source_sink_arcs))
     source_sink_arc_fn = len(onl_neg_source_sink_arcs - offl_neg_source_sink_arcs)
 
-    source_sink_arc_acc = (source_sink_arc_tp + source_sink_arc_tn) / (source_sink_arc_tp + source_sink_arc_tn + source_sink_arc_fp + source_sink_arc_fn) if source_sink_arc_tp + source_sink_arc_tn + source_sink_arc_fp + source_sink_arc_fn > 0 else None
-    source_sink_arc_prec = source_sink_arc_tp / (source_sink_arc_tp + source_sink_arc_fp) if source_sink_arc_tp + source_sink_arc_fp > 0 else None
-    source_sink_arc_rec = source_sink_arc_tp / (source_sink_arc_tp + source_sink_arc_fn) if source_sink_arc_tp + source_sink_arc_fn > 0 else None
+    source_sink_arc_acc = (source_sink_arc_tp + source_sink_arc_tn) / (source_sink_arc_tp + source_sink_arc_tn + source_sink_arc_fp + source_sink_arc_fn) if source_sink_arc_tp + source_sink_arc_tn + source_sink_arc_fp + source_sink_arc_fn > 0 else 0
+    source_sink_arc_prec = source_sink_arc_tp / (source_sink_arc_tp + source_sink_arc_fp) if source_sink_arc_tp + source_sink_arc_fp > 0 else 0
+    source_sink_arc_rec = source_sink_arc_tp / (source_sink_arc_tp + source_sink_arc_fn) if source_sink_arc_tp + source_sink_arc_fn > 0 else 0
 
     return {'node recall': node_rec,
             'node accuracy': node_acc,
@@ -945,9 +945,9 @@ def get_ocdfg_avg_scores(offline : OcdfgModel, online : OcdfgModel) -> dict[str,
     filtered_prec_scores = [prec for prec in prec_scores if prec is not None]
     filtered_acc_scores = [acc for acc in acc_scores if acc is not None]
     
-    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else None,
-            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else None,
-            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else None}
+    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else 0,
+            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else 0,
+            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else 0}
 
 
 def visualize_ocdfg_overlap(offline : OcdfgModel, online : OcdfgModel, output_dir : Path, output_file : str, ot_to_hex_color : dict[str, Any]) -> None:

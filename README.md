@@ -105,7 +105,11 @@ The streaming framework offers three "angles" for evaluation:
 In the a-priori evaluation, object-centric characteristics related to priority policies are collected and visualized for the whole log/stream. The example code and the results for the small example, <i>Age of Empires</i>, and container-logistics log are given in the Juypter notebook `apriori_evaluation.ipynb`.
 
 #### Online-vs-offline evaluation
-The accuracy, precision, and recall of each online model can be quantified against its offline model. For OC-DFGs, the mean squared error of the node and arc annotations is additionally computed. For TOTeM, a distance metric with values between 0 and 1 additionally captures the distance in relations between the online and offline model. While this is not possible for OCPNs due to indistinguishable silent transitions, the corresponding online and offline models for TOTeM and OC-DFGs can be visualized in an "overlapped" way, including their annotations. Assume `ocdfg_model` and `ot_to_hex_color` as above, then example evaluation steps are:
+The accuracy, precision, and recall of each online model can be quantified against its offline model. For OC-DFGs, the mean squared error of the node and arc annotations is additionally computed. For TOTeM, a distance metric with values between 0 and 1 additionally captures the distance in relations between the online and offline model. While this is not possible for OCPNs due to indistinguishable silent transitions, the corresponding online and offline models for TOTeM and OC-DFGs can be visualized in an "overlapped" way, including their annotations. 
+
+The resulting scores and plots for the small example log are shown in the `SmallExample_[...]` Jupyter notebooks in the `examples` directory. For the <i>Age of Empires</i> and container-logistics log, the corresponding evaluation plots can be re-created via the `_scoring_` Jupyter notebooks in the `examples` directory. All figures are available the respective subdirectory of `figures`.
+
+Assume `ocdfg_model` and `ot_to_hex_color` as above, then example evaluation steps are:
 ```python
 [...]
 from model_builder_ocdfg import get_ocdfg_accuracy, visualize_ocdfg_overlap
@@ -133,7 +137,11 @@ plot_heatmap_cp_x_pp(path/to/json/ocel, 'ocdfg', buf_size=20, output_dir=path/to
 Note that the offline TOTeM model requires an XML input log, since `ocpa` is used for importing OCELs, however, JSON logs work fine for offline OC-DFGs and OCPNs. The above steps can be implemented analogously for TOTeM via `model_builder_totem.py` and `onl_vs_offl_evaluation_totem.py`.
 
 #### Runtime and cache-behavior evaluation
-The runtime and cache behavior during stream processing can be recorded via optional `RuntimeMonitor` and `CacheMonitor` attributes in each streaming representation. The former takes runtime measurements, e.g. of individual buffer updates, while the latter e.g. records the distribution of object types across model buffers at 10% intervals in the stream. The collected data can be aggregated and visualized via functionality defined in `monitor_evaluation.py`, e.g.:
+The runtime and cache behavior during stream processing can be recorded via optional `RuntimeMonitor` and `CacheMonitor` attributes in each streaming representation. The former takes runtime measurements, e.g. of individual buffer updates, while the latter e.g. records the distribution of object types across model buffers at 10% intervals in the stream. 
+
+For the container-logistics log, example plots of the monitored runtime and cache behavior can be re-created via the `_monitoring_` Jupyter notebook in the `examples` directory. The resulting plots are located in the corresponding subdirectory in `figures`.
+
+The collected monitoring data can be aggregated and visualized via functionality defined in `monitor_evaluation.py`, e.g.:
 ```python
 from utils import EventStream
 from model_buffers import TotemBuffer

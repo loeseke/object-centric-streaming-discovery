@@ -369,16 +369,15 @@ def get_ocpn_accuracy(offline : OcpnModel, online : OcpnModel) -> dict[str, floa
     act_pair_fn = len(onl_neg_act_pairs - offl_neg_act_pairs)
     act_pair_tn = len(onl_neg_act_pairs.intersection(offl_neg_act_pairs))
 
-    act_pair_acc = (act_pair_tp + act_pair_tn) / (act_pair_tp + act_pair_tn + act_pair_fp + act_pair_fn) if act_pair_tp + act_pair_tn + act_pair_fp + act_pair_fn > 0 else None
-    act_pair_prec = act_pair_tp / (act_pair_tp + act_pair_fp) if act_pair_tp + act_pair_fp > 0 else None
-    act_pair_rec = act_pair_tp / (act_pair_tp + act_pair_fn) if act_pair_tp + act_pair_fn > 0 else None
+    act_pair_acc = (act_pair_tp + act_pair_tn) / (act_pair_tp + act_pair_tn + act_pair_fp + act_pair_fn) if act_pair_tp + act_pair_tn + act_pair_fp + act_pair_fn > 0 else 0
+    act_pair_prec = act_pair_tp / (act_pair_tp + act_pair_fp) if act_pair_tp + act_pair_fp > 0 else 0
+    act_pair_rec = act_pair_tp / (act_pair_tp + act_pair_fn) if act_pair_tp + act_pair_fn > 0 else 0
 
     # Compute double-arc accuracy & precision based on whether activities require variable in-/out-arcs or not
     offl_pos_double_arcs = set()
     offl_neg_double_arcs = set()
     onl_pos_double_arcs = set()
     onl_neg_double_arcs = set()
-
     for ocpn, is_online in [(offline.ocpn, False), (online.ocpn, True)]:
         for ot, act_dict in ocpn[OCPN_DOUBLE_ARCS].items():
             for act, is_double_act in act_dict.items():
@@ -398,9 +397,9 @@ def get_ocpn_accuracy(offline : OcpnModel, online : OcpnModel) -> dict[str, floa
     double_arc_tn = len(onl_neg_double_arcs.intersection(offl_neg_double_arcs))
     double_arc_fn = len(onl_neg_double_arcs - offl_neg_double_arcs)
 
-    double_arc_acc = (double_arc_tp + double_arc_tn) / (double_arc_tp + double_arc_tn + double_arc_fp + double_arc_fn) if double_arc_tp + double_arc_tn + double_arc_fp + double_arc_fn > 0 else None
-    double_arc_prec = double_arc_tp / (double_arc_tp + double_arc_fp) if double_arc_tp + double_arc_fp > 0 else None
-    double_arc_rec = double_arc_tp / (double_arc_tp + double_arc_fn) if double_arc_tp + double_arc_fn > 0 else None
+    double_arc_acc = (double_arc_tp + double_arc_tn) / (double_arc_tp + double_arc_tn + double_arc_fp + double_arc_fn) if double_arc_tp + double_arc_tn + double_arc_fp + double_arc_fn > 0 else 0
+    double_arc_prec = double_arc_tp / (double_arc_tp + double_arc_fp) if double_arc_tp + double_arc_fp > 0 else 0
+    double_arc_rec = double_arc_tp / (double_arc_tp + double_arc_fn) if double_arc_tp + double_arc_fn > 0 else 0
 
     # NOTE: source-sink arc accuracy/precision not feasible since their may be indistinguishable tau transitions
 
@@ -436,6 +435,6 @@ def get_ocpn_avg_scores(offline : OcpnModel, online : OcpnModel) -> dict[str, fl
     filtered_prec_scores = [prec for prec in prec_scores if prec is not None]
     filtered_acc_scores = [acc for acc in acc_scores if acc is not None]
 
-    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else None,
-            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else None,
-            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else None}
+    return {'recall': np.mean(filtered_rec_scores) if len(filtered_rec_scores) > 0 else 0,
+            'precision': np.mean(filtered_prec_scores) if len(filtered_prec_scores) > 0 else 0,
+            'accuracy': np.mean(filtered_acc_scores) if len(filtered_acc_scores) > 0 else 0}

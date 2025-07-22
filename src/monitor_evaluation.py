@@ -8,7 +8,6 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 import os
@@ -16,8 +15,6 @@ from pathlib import Path
 from utils import *
 from monitor import CacheMonitor, RuntimeMonitor
 from model_buffers import TotemBuffer, OcdfgBuffer, OcdfgBufferPerObjectType, OcpnBuffer
-from cache_policy_buffers import CachePolicy, BufferOfDicts, BufferOfDictLists
-from priority_policy_buffers import PPBCustom, PPBEventsPerObjectType, PPBLifespanPerObject, PPBLifespanPerObjectType, PPBObjectsPerEvent, PPBObjectsPerObjectType, PPBStridePerObject, PPBStridePerObjectType, PrioPolicyBuffer, PrioPolicyOrder
 from vars import *
 
 
@@ -55,7 +52,8 @@ def plot_buf_update_rt(rt_mon : RuntimeMonitor, output_dir : Path) -> None:
         rt_buf_df_buf = rt_buf_df.loc[rt_buf_df[M_BUF_NAME] == buf].drop(M_BUF_NAME, axis=1)
         rt_buf_df_buf['moving average'] = rt_buf_df_buf[M_BUF_UPDATE_TIME].rolling(window=window_size).mean()
         ax_0.plot(rt_buf_df_buf[M_STREAM_ITEM], rt_buf_df_buf['moving average'], color=buf_to_color[buf], label=buf)
-    ax_0.legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.36))
+    ax_0.tick_params(axis='x', labelrotation=40)
+    ax_0.legend(loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.45))
 
     os.makedirs(output_dir, exist_ok=True)
     fig_0.savefig(os.path.join(output_dir, 'runtime_per_buf_lineplot.pdf'), format='pdf', bbox_inches='tight')
@@ -68,6 +66,7 @@ def plot_buf_update_rt(rt_mon : RuntimeMonitor, output_dir : Path) -> None:
     ax_1.set_ylabel('Update time [ms]')
 
     sns.boxplot(data=rt_buf_df, x=M_BUF_NAME, y=M_BUF_UPDATE_TIME, ax=ax_1, order=bufs, hue=M_BUF_NAME, palette=buf_to_color, legend=None)
+    ax_1.tick_params(axis='x', labelrotation=40)
     ax_1.tick_params(axis='x', labelrotation=40)
 
     fig_1.savefig(os.path.join(output_dir, 'runtime_per_buf_boxplot.pdf'), format='pdf', bbox_inches='tight')
@@ -112,7 +111,8 @@ def plot_stream_item_processing_rt(rt_mon : RuntimeMonitor, output_dir : Path) -
         rt_item_df_item = rt_item_df.loc[rt_item_df[M_ITEM_TYPE] == item].drop(M_ITEM_TYPE, axis=1)
         rt_item_df_item['moving average'] = rt_item_df_item[M_ITEM_PROCESSING_TIME].rolling(window=window_size).mean()
         ax_0.plot(rt_item_df_item[M_STREAM_ITEM], rt_item_df_item['moving average'], color=item_to_color[item], label=item)
-    ax_0.legend(loc='lower center', ncol=3, bbox_to_anchor=(0.5, -0.3))
+    ax_0.tick_params(axis='x', labelrotation=40)
+    ax_0.legend(loc='lower center', ncol=3, bbox_to_anchor=(0.5, -0.35))
 
     os.makedirs(output_dir, exist_ok=True)
     fig_0.savefig(os.path.join(output_dir, 'runtime_per_stream_item_lineplot.pdf'), format='pdf', bbox_inches='tight')
@@ -135,7 +135,7 @@ def plot_stream_item_processing_rt(rt_mon : RuntimeMonitor, output_dir : Path) -
     pie_values = [avg_item_creation_rt] + avg_buf_update_times
     pie_colors = ['lightgray'] + [buf_to_color[buf] for buf in bufs]
     ax_1.pie(pie_values, labels=None, colors=pie_colors, autopct='%1.0f%%')
-
+    ax_1.tick_params(axis='x', labelrotation=40)
     ax_1.legend(title=f'Avg. stream-item processing time: {avg_item_rt:.2f} ms', labels=pie_labels, ncol=2, loc='lower center', bbox_to_anchor=(0.5, -0.3))
 
     fig_1.savefig(os.path.join(output_dir, 'runtime_per_stream_item_pie.pdf'), format='pdf', bbox_inches='tight')
@@ -172,17 +172,20 @@ def plot_cache_stats_per_ot_over_stream(c_mon : CacheMonitor, output_dir : Path)
     axs[1].set_title('Cache hits per object type across all model buffers')
     axs[1].set_xlabel('Stream item')
     axs[1].set_ylabel('Cumulative cache hits')
+    axs[1].tick_params(axis='x', labelrotation=40)
     axs[1].yaxis.tick_right()
     axs[1].yaxis.set_tick_params(labelright=True)
 
     axs[0].set_title('Cache evictions per object type across all model buffers')
     axs[0].set_xlabel('Stream item')
     axs[0].set_ylabel('Cumulative cache evictions')
+    axs[0].tick_params(axis='x', labelrotation=40)
     axs[0].yaxis.tick_right()
 
     axs[2].set_title('Cache misses per object type across all model buffers')
     axs[2].set_xlabel('Stream item')
     axs[2].set_ylabel('Cumulative cache misses')
+    axs[2].tick_params(axis='x', labelrotation=40)
     axs[2].yaxis.tick_right()
     axs[2].yaxis.set_tick_params(labelright=True)
 
@@ -202,7 +205,7 @@ def plot_cache_stats_per_ot_over_stream(c_mon : CacheMonitor, output_dir : Path)
         axs[2].plot(x_hits_misses, y_misses, color=ot_to_color[ot], label=ot)
 
     lgd_handles = [Line2D([0], [0], color=ot_to_color[ot], label=ot) for ot in ot_to_color]
-    fig.legend(loc='lower center', handles=lgd_handles, ncol=len(ots), bbox_to_anchor=(0.5, -0.15))
+    fig.legend(loc='lower center', handles=lgd_handles, ncol=len(ots), bbox_to_anchor=(0.5, -0.25))
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'cache_stats_per_ot_lineplot.pdf'), format='pdf', bbox_inches='tight')
@@ -283,17 +286,20 @@ def plot_cache_stats_per_buf_over_stream(c_mon : CacheMonitor, output_dir : Path
     axs[1].set_title('Cache hits per model buffer across all object types')
     axs[1].set_xlabel('Stream item')
     axs[1].set_ylabel('Cumulative cache hits')
+    axs[1].tick_params(axis='x', labelrotation=40)
     axs[1].yaxis.tick_right()
     axs[1].yaxis.set_tick_params(labelright=True)
 
     axs[0].set_title('Cache evictions per model buffer across all object types')
     axs[0].set_xlabel('Stream item')
     axs[0].set_ylabel('Cumulative cache evictions')
+    axs[0].tick_params(axis='x', labelrotation=40)
     axs[0].yaxis.tick_right()
 
     axs[2].set_title('Cache misses per model buffer across all object types')
     axs[2].set_xlabel('Stream item')
     axs[2].set_ylabel('Cumulative cache misses')
+    axs[2].tick_params(axis='x', labelrotation=40)
     axs[2].yaxis.tick_right()
     axs[2].yaxis.set_tick_params(labelright=True)
 
@@ -313,7 +319,7 @@ def plot_cache_stats_per_buf_over_stream(c_mon : CacheMonitor, output_dir : Path
         axs[2].plot(x_hits_misses, y_misses, color=buf_to_color[buf], label=buf)
 
     lgd_handles = [Line2D([0], [0], color=buf_to_color[buf], label=buf) for buf in buf_to_color]
-    fig.legend(loc='lower center', handles=lgd_handles, ncol=len(bufs), bbox_to_anchor=(0.5, -0.15))
+    fig.legend(loc='lower center', handles=lgd_handles, ncol=len(bufs), bbox_to_anchor=(0.5, -0.25))
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'cache_stats_per_buf_lineplot.pdf'), format='pdf', bbox_inches='tight')
@@ -358,7 +364,7 @@ def plot_cache_stats_per_buf_total(c_mon : CacheMonitor, output_dir : Path) -> N
     ax.set_title('Cache statistics per model buffer across all object types')
     ax.set_xlabel('Model buffer')
     ax.set_ylabel('Total')
-    ax.tick_params(axis='x', labelrotation=0)
+    ax.tick_params(axis='x', labelrotation=40)
 
     cache_stats_cp = sns.color_palette("coolwarm", 3)
 
@@ -425,15 +431,17 @@ def plot_hit_miss_prob(c_mon : CacheMonitor, output_dir : Path) -> None:
     axs[0].set_title(f'Avg. hit-miss probability per stream item per model buffer')
     axs[0].set_ylabel('Fraction')
     axs[0].set_xlabel('Model buffer')
+    axs[0].tick_params(axis='x', labelrotation=40)
 
     axs[1].tick_params(axis='x', labelrotation=40)
     axs[1].set_title(f'Avg. hit-miss probability per stream item per object type')
     axs[1].set_ylabel('Fraction')
     axs[1].set_xlabel('Object type')
+    axs[1].tick_params(axis='x', labelrotation=40)
     axs[1].yaxis.set_tick_params(labelleft=True)
 
     handles, labels = axs[0].get_legend_handles_labels()
-    fig.legend(loc="lower center", handles=handles, labels=labels, bbox_to_anchor=(0.5, -0.33), ncol=2)
+    fig.legend(loc="lower center", handles=handles, labels=labels, bbox_to_anchor=(0.5, -0.4), ncol=2)
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'cache_hit_miss_prob_barplot.pdf'), format='pdf', bbox_inches='tight')
@@ -478,11 +486,13 @@ def plot_full_cache_evic_over_stream(c_mon : CacheMonitor, output_dir : Path) ->
     axs[0].set_title('Full cache evictions per object type across all model buffers')
     axs[0].set_xlabel('Stream item')
     axs[0].set_ylabel('Cumulative full cache evictions')
+    axs[0].tick_params(axis='x', labelrotation=40)
     axs[0].yaxis.tick_right()
 
     axs[1].set_title('Full cache evictions per model buffer across all object types')
     axs[1].set_xlabel('Stream item')
     axs[1].set_ylabel('Cumulative full cache evictions')
+    axs[1].tick_params(axis='x', labelrotation=40)
     axs[1].yaxis.tick_right()
     axs[1].yaxis.set_tick_params(labelright=True)
 
@@ -498,8 +508,8 @@ def plot_full_cache_evic_over_stream(c_mon : CacheMonitor, output_dir : Path) ->
         y_buf = full_evic_df_buf['cum_count_buf']
         axs[1].plot(x_buf, y_buf, color=buf_to_color[buf], label=buf)
 
-    axs[0].legend(loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.4))
-    axs[1].legend(loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.3))
+    axs[0].legend(loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.5))
+    axs[1].legend(loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.5))
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'full_cache_evictions_lineplot.pdf'), format='pdf', bbox_inches='tight')
@@ -552,10 +562,11 @@ def plot_ot_frac_per_buf(c_mon : CacheMonitor, output_dir : Path) -> None:
         axs[i_buf].set_title(f'Fractions of object types in {buf}')
         axs[i_buf].set_ylabel('Fraction per object type')
         axs[i_buf].set_xlabel('Position in stream [%]')
+        axs[i_buf].tick_params(axis='x', labelrotation=40)
         axs[i_buf].yaxis.set_tick_params(labelleft=True)
 
     lgd_handles = [Patch(facecolor=ot_to_color[ot], label=ot) for ot in ot_to_color]
-    fig.legend(loc="lower center", handles=lgd_handles, bbox_to_anchor=(0.5, -0.12), ncol=2)
+    fig.legend(loc="lower center", handles=lgd_handles, bbox_to_anchor=(0.5, -0.15 if len(bufs) == 3 else -0.25), ncol=2)
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'ot_fractions_per_buf_barplot.pdf'), format='pdf', bbox_inches='tight')
@@ -596,10 +607,11 @@ def plot_pp_buf_size_over_stream(c_mon : CacheMonitor, output_dir : Path) -> Non
     ax.set_title(f'Moving average of priority-policy buffer size (window size {window_size})')
     ax.set_xlabel('Stream item')
     ax.set_ylabel('Buffer size')
+    ax.tick_params(axis='x', labelrotation=40)
 
     ax.plot(x, y, label='Priority-policy buffer size')
     ax.hlines(c_mon.total_model_buf_sizes, x[0], x[-1], colors='red', label='Sum of model-buffer sizes')
-    ax.legend(loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.3))
+    ax.legend(loc="lower center", ncol=2, bbox_to_anchor=(0.5, -0.35))
 
     os.makedirs(output_dir, exist_ok=True)
     fig.savefig(os.path.join(output_dir, 'pp_buf_size_lineplot.pdf'), format='pdf', bbox_inches='tight')

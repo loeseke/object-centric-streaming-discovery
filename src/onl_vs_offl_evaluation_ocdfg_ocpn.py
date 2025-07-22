@@ -128,7 +128,7 @@ def plot_heatmap_cp_x_pp(file_path : str, model_buf_name : str, buf_size : int =
         if output_dir is None:
             output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
         os.makedirs(output_dir, exist_ok=True)
-        file_name = f'{model_buf_name}_scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
+        file_name = f'scoring_heatmap_buf-size-{buf_size}_cr-{int(coupled_rm)}.pdf'
 
         fig, axs = plt.subplots(1, 3, figsize=(7,4), sharey=True)
         fig.tight_layout()
@@ -187,7 +187,7 @@ def plot_stream_item_processing_time_over_buf_sizes(file_path : str, buf_sizes :
     if output_dir is None:
         output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), "ocdfg")
     os.makedirs(output_dir, exist_ok=True)
-    file_name = f'{model_buf_name}_avg_item_time_over_buf_sizes.pdf'
+    file_name = f'avg_item_time_over_buf_sizes.pdf'
 
     time_df = pd.DataFrame(data=time_df_rows)
 
@@ -286,7 +286,7 @@ def plot_avg_score_over_varied_buf_size(file_path : str, fixed_buf_size : int, b
         output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
     os.makedirs(output_dir, exist_ok=True)
     pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    file_name = f'{model_buf_name}_scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    file_name = f'scoring_varying_buf-size-{fixed_buf_size}_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     fig, axs = plt.subplots(1, 3, figsize=(18,4), sharey=True)
     fig.tight_layout()
@@ -388,7 +388,7 @@ def plot_avg_score_over_buf_sizes(file_path : str, buf_sizes : list[int],  model
         output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0]), model_buf_name)
     os.makedirs(output_dir, exist_ok=True)
     pp_name = f'{pp_buf.prio_order.value.lower()}-{pp_buf.pp.value.lower().replace(' ', '-')}' if pp_buf is not None else 'none'
-    file_name = f'{model_buf_name}_scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
+    file_name = f'scoring_over_buf_sizes_{model_buf.cp.value.lower()}_{pp_name}_cr-{int(model_buf.coupled_removal)}.pdf'
 
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('buf size')
@@ -464,7 +464,7 @@ def plot_score_over_stream(file_path : str, model_buffer : Union[OcdfgBuffer, Oc
     if output_dir is None:
         output_dir = Path('../scoring_output',  os.path.basename(os.path.splitext(file_path)[0])) / get_model_output_path(model_buffer)
     os.makedirs(output_dir, exist_ok=True)
-    file_name = f'{model_buf_name}_scoring_over_stream.pdf'
+    file_name = f'scoring_over_stream.pdf'
 
     score_df = pd.DataFrame(data=score_df_rows)
     score_df = score_df.set_index('pct')
